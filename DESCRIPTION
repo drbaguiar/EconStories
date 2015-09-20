@@ -1,16 +1,15 @@
-Package: EconModels
+Package: EconStories
 Type: Package
-Title: Tools to describe and simulate simple (101) economic models
+Title: Tell interactive stories based on economic models
 Version: 0.1
 Date: 2015-09-14
 Author: Sebastian Kranz
 Maintainer: Sebastian Kranz <sebastian.kranz@uni-ulm.de>
-Description: Tools to describe and simulate simple (101) economic models
-             Preliminary: syntax and functionality may change
+Description: Tell interactive stories based on economic models
 License:
     Code: GPL >= 2.0
     Modells and Stories: CC BY-NC-SA (Creative Commons, Non-Commercial, Copyleft)
-Depends: dplyr,restorepoint,codeUtils, sktools, stringtools, grid,
+Depends: dplyr,restorepoint,codeUtils, sktools, stringtools,
          YamlObjects, nleqslv,whisker, markdown, shinyEvents, shiny,
-         dygraphs, shinyBS, shinyAce, RColorBrewer, dplyrExtras, hwriter,
-         symbeqs
+         dygraphs, shinyBS, shinyAce,  dplyrExtras, hwriter,
+         symbeqs,EconCurves, EconModels
