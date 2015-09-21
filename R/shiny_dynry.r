@@ -1,32 +1,32 @@
 
 examples.shiny.dynry = function() {
   set.restore.point.options(display.restore.point = TRUE)
-  setwd("D:/libraries/EconCurves/EconCurves")
-  init.ec()
-  ec = get.ec()
+  setwd("D:/libraries/EconStories/EconStories")
+  initEconStories()
+  ES = getES()
   es = load.story("ThreeEq_G_langfristig")
-  es = load.story("SimpleLabor3EqStory.yaml")
+  es = load.story("SimpleLabor3EqStory")
   init.story(es)
-  es$t = 1
+  #set.dynry.step(t=1,es=es)
+
   app = shinyStoryApp(es)
   runEventsApp(app,launch.browser = rstudio::viewer)
 
   em = es$em
   sim = em$sim
   dyplot.timelines(em$sim,cols = c(em$var.names,"A"),em = em)
-
 }
 
 shinyStoryApp = function(es,...) {
   restore.point("shinyStoryApp")
-  
-  library(shinyEvents)  
+
+  library(shinyEvents)
   library(shinyAce)
   library(shinyBS)
-  
+
   app = eventsApp()
   app$es = es
-  app$allow.edit = get.ec()$allow.edit
+  app$allow.edit = getES()$allow.edit
   ui = story.ui()
   ui = fluidPage(title = es$storyId,ui)
 
@@ -34,14 +34,11 @@ shinyStoryApp = function(es,...) {
     restore.point("app.initHandler")
     app$es = es
   }, app=app)
-  
+
   app$ui = ui
   dynry.tell.part.task()
   app
 }
-
-
-
 
 dynry.ui = function(app=getApp(), es=app$es) {
   restore.point("dynry.ui")
@@ -68,7 +65,7 @@ dynry.ui = function(app=getApp(), es=app$es) {
       dygraphOutput("dygraph",height="150px")
       #uiOutput("panesUI")
     )
-  ) 
+  )
   #setPlot("testPlot",{plot(runif(100),runif(100))})
   #setUI(id = "panesUI",dynry.panes.ui())
   buttonHandler("stNextBtn", dynry.next.btn.click,if.handler.exists = "skip")
@@ -77,7 +74,7 @@ dynry.ui = function(app=getApp(), es=app$es) {
   buttonHandler("stExitBtn", exit.to.main,if.handler.exists = "skip")
   buttonHandler("stEditBtn", edit.dynry.click,if.handler.exists = "skip")
   buttonHandler("stRefreshBtn", refresh.dynry.click,if.handler.exists = "skip")
-  
+
 
   ui
 }
@@ -86,7 +83,7 @@ dynry.ui = function(app=getApp(), es=app$es) {
 edit.dynry.click = function(app=getApp(), es=app$es,...) {
   restore.point("edit.dynry.click")
   cat("Edit Story...")
-  
+
 }
 
 dynry.wait.for.answer = function(app=getApp(), es=app$es) {
@@ -102,7 +99,7 @@ dynry.wait.for.answer = function(app=getApp(), es=app$es) {
   es$wait.for.answer = TRUE
   return(TRUE)
 }
-  
+
 dynry.process.click.answer = function(app=getApp(), es=app$es,xy, pane.name,...) {
   restore.point("dynry.check.click.answer")
   res = check.click.answer(es = es,xy = xy,pane.name = pane.name)
@@ -114,19 +111,19 @@ dynry.process.click.answer = function(app=getApp(), es=app$es,xy, pane.name,...)
   } else {
     es$attempts = es$attempts+1
     setUI(id = "answerUI",p(paste0("Not correct. (", es$attempts, " attempts.)")))
-  } 
-}  
+  }
+}
 
 shiny.pane.click = function(app=getApp(), es=app$es,pane.name,id, session, value,...) {
   #args = list(...)
   restore.point("shiny.pane.click")
-  if (length(value)==0) 
+  if (length(value)==0)
     return()
   restore.point("shiny.pane.click.with.val")
   xy = c(x=value$x,y=value$y)
   cat("\nclick: ")
   print(value)
-  
+
   # outside a task just continue
   if (!is.true(es$wait.for.answer)) {
     dynry.next.btn.click()
@@ -143,40 +140,40 @@ refresh.dynry.click = function(app=getApp(), es=app$es,...) {
   id = es$storyId
   restore.point("refresh.dynry.click")
 
-  # reload and init story  
+  # reload and init story
   es = load.story(id)
   app$es = es
   init.story(es)
-  
+
   dynry.tell.part.task(t = t,step.num = step.num)
-  
+
 }
 
 
 dynry.next.btn.click = function(app=getApp(), es=app$es,...) {
   restore.point("stNextBtnClicked")
   #cat("stNextBtn was clicked...")
-  
+
   if (isTRUE(es$wait.for.answer)) {
     setUI(id = "answerUI",p(paste0("You have not yet answered the question.")))
     return()
   }
-  
+
   res = dynry.next(es=es)
   if (res$end) return()
   dynry.tell.part.task()
-  
+
   if (dynry.wait.for.answer(es=es))
     return()
-  
+
   dynry.tell.part.sol()
 }
 
 dynry.forward.btn.click = function(app=getApp(), es=app$es,...) {
   restore.point("dynry.forward.btn.click")
-  
+
   dynry.forward(es, update.es=TRUE)
-  
+
   dynry.tell.part.task()
   if (dynry.wait.for.answer(es=es))
     return()
@@ -211,29 +208,29 @@ dynry.panes.ui = function(app=getApp(), es=app$es) {
 dynry.tell.part.task = function(app=getApp(),es=app$es, t=es$t, step.num=es$step.num) {
   restore.point("dynry.tell.part.task")
   es$t = t; es$step.num = step.num
-  
+
   part = get.dynry.part(es,t,step.num)
   html = compile.story.txt(c(part$tell,part$ask), em=es$em, t=t,out = "html")
   html = paste0("<h4>", t,".", step.num,"</h4>", html)
   setUI(id = "tellUI",HTML(html))
   setUI(id = "answerUI",HTML(""))
-  
+
   lines = get.dynry.step.lines(es = es,t = t,step = step.num,solved=FALSE,previous.steps = TRUE)
   shiny.plot.lines(em=es$em,lines)
 }
 
 dynry.tell.part.sol = function(app=getApp(),es=app$es, t=es$t, step.num=es$step.num) {
   restore.point("dynry.tell.part.sol")
-  
+
   es$t = t; es$step.num = step.num
-  
+
   part = get.dynry.part(es,t,step.num)
   html = compile.story.txt(c(part$success), em=es$em, t=t,out = "html")
   setUI(id = "answerUI",HTML(html))
 
   lines = get.dynry.step.lines(es = es,t = t,step = step.num,solved=TRUE,previous.steps = TRUE)
   shiny.plot.lines(em=es$em,lines=lines)
-  
+
   dygraph =dynry.step.dyplot(es=es,t=t,step = step.num,solved = TRUE,vars = es$timelineVars)
   app$output$dygraph = renderDygraph(dygraph)
 

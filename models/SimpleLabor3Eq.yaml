@@ -8,7 +8,7 @@ curves:
     descr: The intermediate run price-setting real wage equation
     eq: w_ == wPS(y=y_)
     xy: [y_,w_]
-    color: blue 
+    color: blue
   wWS:
     descr: The intermediate-run real wage-setting curve
     eq: w_ == wWS(y=y_)
@@ -22,34 +22,26 @@ curves:
     descr: The nominal wage curve for given inflation expectations
     eq: W_ == EP * wWS(y=y_)
     xy: [y_,W_]
-    color: blue 
+    color: blue
   P_y:
     label: 'P{{t}}(y)'
     descr: The price that firms set
     eq: W_ == (1+mu)*EP*wWS(y=y_)
     xy: [y_,W_]
-    color: green 
+    color: green
 
 panes:
   labour_market:
     xy: [y_,w_]
-    curves: [wPS,wWS]
+    curve_names: [wPS,wWS]
     xmarkers: [y,y_eq]
     ymarkers: [w,w_eq, w_prom]
-
-#  nominal_wages:
-#    pos: [1,1]
-#    xy: [y_,W_]
-#    curves: [WWS, P_y]
-#    xmarkers: [y, y_eq]
-#    ymarkers: [W,W_eq,P]
-
-#  PC_pane:
-#    pos: [2,1]
-#    xy: [y_,pi_]
-#    curves: [PC]
-#    xmarkers: [y,y_eq]
-#    ymarkers: [pi,Epi]
+  PC_pane:
+    pos: [2,1]
+    xy: [y_,pi_]
+    curve_names: [PC]
+    xmarkers: [y,y_eq]
+    ymarkers: [pi,Epi,piPC, lag_pi]
 
 
 
@@ -65,7 +57,7 @@ vars:
   piPC: Epi + wWS / wPS - 1
   MPL:
     descr: Marginal product of labor
-    formula: lambda 
+    formula: lambda
   wPS:
     descr: |
       The intermediate run price-setting real wage equation.
@@ -75,7 +67,7 @@ vars:
   wWS:
     descr: |
       The intermediate run real wage-setting curve.
-      Offered efficiency wages increase with the total labor demand. 
+      Offered efficiency wages increase with the total labor demand.
     formula: w_min + w_slope*y
   WWS:
     descr: The nominal wage agreed on in the wage negotiations
@@ -112,9 +104,9 @@ vars:
     formula: (1+mu)*MC
   pi:
     descr: the actual inflation rate
-    formula: (P-lag_P)/lag_P    
+    formula: (P-lag_P)/lag_P
   # adaptive inflation expectations
-  Epi: 
+  Epi:
     descr: expected inflation, simply the past inflation rate
     formula: lag_pi
   EP:
@@ -143,6 +135,6 @@ scenarios:
       y_down:
         descr: Demand decreases
         effects:
-          y: 'y*0.9'
+          y: 'y*1.1'
         start: 3
         duration: 1

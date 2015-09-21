@@ -1,25 +1,24 @@
 examples.find.yaml.block = function() {
   setwd("D:/libraries/EconCurves/EconCurves")
-  init.ec()
-  ec = get.ec()
+  ES = initEconStories()
   em = load.model("SimpleLabor3Eq")
   yaml = em$yaml
   block = c("vars","w")
   find.yaml.block(yaml, c("vars","w"))
-  
-  
+
+
 }
 
 find.yaml.block = function(yaml, block, tab.size=2, sep.lines=TRUE) {
   restore.point("find.yaml.block")
-  
+
   if (sep.lines) yaml = sep.lines(yaml)
   key = block[1]
   lines = which(str.starts.with(yaml,paste0(key,":")))
   if (length(lines)==0) return(NULL)
-  
+
   line = lines[1]
-    
+
   if (line==length(yaml)) {
     end = line
   } else {
@@ -33,7 +32,7 @@ find.yaml.block = function(yaml, block, tab.size=2, sep.lines=TRUE) {
       end = line+end[1]-1
     }
   }
-  
+
   if (length(block)>1) {
     block.yaml = substring(yaml[line:end], tab.size+1)
     res = find.yaml.block(yaml=block.yaml,block=block[-1],tab.size=tab.size,sep.lines=FALSE)

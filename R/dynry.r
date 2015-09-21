@@ -3,41 +3,50 @@ examples.dynry = function() {
   set.restore.point.options(display.restore.point = !TRUE)
 
   setwd("D:/libraries/EconStories/EconStories")
-  init.ec()
-  ec = get.ec()
-  #es = load.story("ThreeEq_G_langfristig")
-  #es = load.story("IS_LM_PC_G_kurzfristig")
+  ES = initEconStories()
   es = load.story("SimpleLabor3EqStory")
   init.story(es)
-  par(mfrow=c(1,2),oma=c(0,0,0,0))
 
-  em = es$em
-  sim = em$sim
-  dyplot.timelines(em$sim,cols = c(em$var.names,"A"),em = em)
+  step.num = 0
+  step.num = step.num +1
+  set.dynry.step(t=2, step.num=step.num, es=es)
+  plot.part.pane(es=es)
+
+  #dyplot.timelines(em$sim,cols = c(em$var.names,"A"),em = em)
 
 }
 
 
-init.dynry = function(es, em=es$em) {
+init.dynry = function(es, em=es$em, sim=NULL) {
   restore.point("init.dynry")
 
+
+  # Initialize and simulate model
+
+  if (!is.null(em)) {
+    init.model(em)
+    if (is.null(es$scenario))
+      es$scenario = em$scenarios[[es$scenarioId]]
+    init.model.scen(em,scen = es$scenario)
+    simulate.model(em,scen = es$scenario,init.scen = FALSE)
+    es$sim = em$sim
+  } else {
+    es$sim = sim
+  }
+
+  es$T = NROW(es$sim)
   es$t = es$step.num = 1
   es$wait.for.answer = FALSE
   es$tol = 0.07
 
 
+  es$curves = init.curves(es$curves)
+  panes = lapply(es$panes, init.story.pane, es=es)
+  es$panes = c(lapply(em$panes, as.environment), panes)
+
   init.dynry.parts(es)
 
-
-  init.model(em)
-  if (is.null(es$scenario))
-    es$scenario = em$scenarios[[es$scenarioId]]
-
-  es$T = as.numeric(es$scenario$T)
-
-  init.model.scen(em,scen = es$scenario)
-  simulate.model(em,scen = es$scenario,init.scen = FALSE)
-
+  set.dynry.step(t=1,es=es)
 }
 
 dynry.tparts = function(es,t=es$t) {
@@ -62,8 +71,7 @@ dynry.next = function(es, t=es$t, step.num=es$step.num, update.es=TRUE) {
   }
 
   if (update.es) {
-    es$t = t
-    es$step.num = step.num
+    set.dynry.step(t=t, step.num=step.num, solved=FALSE)
   }
   return(list(t=t, step.num=step.num, end=FALSE))
 }
@@ -88,9 +96,7 @@ dynry.prev = function(es, t=es$t, step.num=es$step.num, update.es=TRUE) {
   }
 
   if (update.es) {
-    es$t = t
-    es$step.num = step.num
-    es$wait.for.answer = FALSE
+    set.dynry.step(t=t, step.num=step.num, solved=TRUE)
   }
 
   return(list(t=t, step.num=step.num, start=start))
@@ -104,14 +110,15 @@ dynry.forward = function(es, t = es$t, step.num = es$step.num, update.es=TRUE) {
   if (tparts$row == NROW(es$tparts.df)) {
     t = es$T
     step.num = tparts$num.parts
+    solved = TRUE
   } else {
     row = tparts$row+1
     t = es$tparts.df$start.t[[row]]
     step.num = 1
+    solved = FALSE
   }
   if (update.es) {
-    es$t = t
-    es$step.num = step.num
+    set.dynry.step(t=t, step.num=step.num, solved=TRUE)
   }
 
   return(list(t=t, step.num = step.num))
@@ -121,16 +128,10 @@ dynry.forward = function(es, t = es$t, step.num = es$step.num, update.es=TRUE) {
 init.dynry.parts = function(es) {
   restore.point("init.dynry.parts")
   #period = es$periods[[2]]
-
-
   prev.part = list(t=0, shown=NULL)
-
   step.num = 0
-
   part.ind = 0
-
   part.names = names(es$parts)
-
   parts = vector("list",length(es$parts))
 
   i = 1
@@ -187,10 +188,12 @@ init.dynry.parts = function(es) {
 
 
     part$shown = setdiff(part$shown,c(part$hid, sc("lag_", part$laghide)))
-    part$start.symbols = part$shown
+    part$start.symbols = part$hint.symbols = part$failure.symbols = part$shown
 
     part$shown = unique(c(part$shown, story.part.task.symbols(part)))
-    part$end.symbols = part$shown
+
+
+    part$success.symbols = part$shown
 
     if ("tell" %in% part$append) {
       if (!is.null(prev.part$tell))
@@ -224,6 +227,30 @@ init.dynry.parts = function(es) {
   es
 }
 
+
+
+set.dynry.step = function(t, step.num=1, solved=FALSE, stage=NULL, es) {
+  restore.point("set.dynry.step")
+
+  if (is.null(stage)) {
+    if (!solved) {
+      es$stage = "start"
+    } else {
+      es$stage = "success"
+    }
+  }
+
+  es$t = t
+  es$sim.row = es$t
+  es$step.num = step.num
+
+  es$part.ind =get.dynry.part.ind(es=es)
+  es$part = es$parts[[es$part.ind]]
+  es$solved = solved
+
+  es$wait.for.answer = !es$solved
+}
+
 get.dynry.part.ind = function(es, t=es$t, step.num = es$step.num) {
   row = which(es$tparts.df$start.t <= t & t <= es$tparts.df$end.t)
   es$tparts.df$part[[row]][step.num]
@@ -235,18 +262,6 @@ get.dynry.part = function(es, t=es$t, step.num = es$step.num) {
   row = which(es$tparts.df$start.t <= t & t <= es$tparts.df$end.t)
   part.ind = es$tparts.df$parts[[row]][step.num]
   es$parts[[part.ind]]
-}
-
-
-get.dynry.step.symbols = function(es,t, step.num, solved=TRUE, previous.steps=TRUE) {
-  part = get.dynry.part(es,t, step.num)
-
-  if (!solved) {
-    symbols = part$start.symbols
-  } else if (solved) {
-    symbols = part$end.symbols
-  }
-  symbols
 }
 
 dynry.step.dyplot = function(es, t, step, solved=FALSE, previous.steps=TRUE, pane.names = names(es$em$panes), vars = names(es$em$vars)) {
@@ -274,156 +289,8 @@ dynry.step.dyplot = function(es, t, step, solved=FALSE, previous.steps=TRUE, pan
 
 }
 
-get.dynry.step.lines = function(es, t, step.num, solved=FALSE, previous.steps=TRUE, pane.names = names(es$em$panes)) {
-  restore.point("get.dynry.step.lines")
-  part = get.dynry.part(es,t, step.num)
-
-  if (!solved) {
-    symbols = part$start.symbols
-  } else if (solved) {
-    symbols = part$end.symbols
-  }
-  compute.symbol.lines(t = t,em = es$em,symbols = symbols, pane.names=pane.names)
-}
-
-has.click.found = function(click.val, ref.val, axis="xy", tol=0.05, tol.units=c("perc","inches")[1],pane=NULL) {
-  restore.point("has.click.found")
-
-  if (tol.units=="inches") {
-    if (axis=="x") {
-      ref.inch = grconvertX(ref.val, from = "user", to = "inches")
-      click.inch = grconvertX(click.val[[1]], from = "user", to = "inches")
-      dist = abs(ref.inch-click.inch)
-    } else if (axis=="y") {
-      ref.inch = grconvertY(ref.val, from = "user", to = "inches")
-      click.inch = grconvertY(click.val[[length(click.val)]], from = "user", to = "inches")
-      dist = abs(ref.inch-click.inch)
-    } else if (axis=="xy") {
-      riX = grconvertX(ref.val[[1]], from = "user", to = "inches")
-      ciX = grconvertX(click.val[[1]], from = "user", to = "inches")
-      riY = grconvertY(ref.val[[2]], from = "user", to = "inches")
-      ciY = grconvertY(click.val[[2]], from = "user", to = "inches")
-      dist = sqrt((riX-ciX)^2+(riY-ciY)^2)
-    }
-    return(dist<=tol)
-  }
-  if (tol.units=="perc") {
-    xlen = diff(pane$xrange)
-    ylen = diff(pane$yrange)
-    if (axis=="x") {
-      dist = abs(ref.val-click.val[[1]]) / xlen
-    } else if (axis=="y") {
-      dist = abs(ref.val-click.val[[length(click.val)]]) / ylen
-    } else if (axis=="xy") {
-      dist = sqrt(((ref.val[[1]]-click.val[[1]])/xlen)^2+
-                  ((ref.val[[2]]-click.val[[2]])/ylen)^2)
-    }
-    return(dist<=tol)
-  }
-  stop("unknown.tol.units")
-
-}
-
 get.task.pane = function(es, task) {
   if (!is.null(task$pane)) return(task$pane)
   return(NULL)
 }
-
-compute.symbol.lines = function(t, em, symbols, pane.names=names(em$panes)) {
-  restore.point("compute.symbol.lines")
-  lag = symbols[str.starts.with(symbols,"lag_")]
-  cur = setdiff(symbols,lag)
-
-  cur.lines = lapply(em$panes[pane.names], function(pane) {
-    compute.pane.lines(pane = pane,em = em,t=t,symbols=cur)
-  })
-  cur.lines = do.call(c,cur.lines)
-  names(cur.lines) = sapply(cur.lines, function(line) line$base)
-
-
-  lag.base = str.right.of(lag,"lag_")
-  lag.t = ifelse(t>1,t-1,t)
-  lag.lines = lapply(em$panes[pane.names], function(pane) {
-    compute.pane.lines(pane = pane,em = em,t=lag.t,symbols=lag.base,level = 2)
-  })
-  lag.lines = do.call(c, lag.lines)
-  names(lag.lines) = sc("lag_",sapply(lag.lines, function(line) line$base))
-
-  c(cur.lines, lag.lines)# [symbols]
-}
-
-check.click.answer = function(es,xy,pane.name,t=es$t, step.num=es$step.num,task=NULL,...) {
-  restore.point("check.click.answer")
-  em = es$em
-  if (is.null(task)) {
-    part = get.dynry.part(es,t, step.num)
-    task = part$task
-  }
-  if (task$type == "shift") {
-    ret = check.shift.answer(es=es,xy=xy,em=em,t=t,task=task, pane.name=pane.name)
-  } else if (task$type == "find") {
-    ret = check.find.answer(es=es,xy=xy,em=em,t=t,task=task, pane.name=pane.name)
-  } else if (task$type == "findPoint") {
-    ret = check.findPoint.answer(es=es,xy=xy,em=em,t=t,task=task, pane.name=pane.name)
-  }
-
-  return(ret)
-}
-
-check.shift.answer = function(es,xy,pane.name,task, em=es$em,t=es$t)  {
-  restore.point("check.shift.answer")
-  #cat("\nAnswer by clicking correctly in the figure.")
-  symbols = task$shift$symbol
-
-  # wrong pane clicked
-  pane = es$em$panes[[pane.name]]
-  if (!has.pane.all.symbols(pane, symbols))
-    return(FALSE)
-
-  ref.line = compute.symbol.lines(t=t, em=em, symbols=symbols[1], pane.names=pane.name)[[1]]
-  line = compute.symbol.lines(t=t, em=em, symbols=symbols[2], pane.names=pane.name)[[1]]
-
-  ref.shift = line.to.line.shift(line, ref.line)
-
-  point.shift = sign(point.to.line.pos(xy,ref.line))
-  if (all(point.shift==ref.shift))
-    return(TRUE)
-  return(FALSE)
-}
-
-# Find a marker
-check.find.answer = function(es,xy,pane.name,task, em=es$em,t=es$t, val = as.list(em$sim[t,]), tol=es$tol) {
-  restore.point("check.find.answer")
-  symbol = task$find$symbol
-  ref.val = val[[symbol]]
-  pane = em$panes[[pane.name]]
-  # wrong pane clicked
-  if (!all(symbol %in% names(pane$markers))) {
-    return(FALSE)
-  }
-  axis = pane$markers[[symbol]]$axis
-  found = has.click.found(click.val = xy,ref.val = ref.val,axis = axis, tol=tol,pane=pane)
-  return(found)
-}
-
-
-# Find a marker
-check.findPoint.answer = function(es,xy,pane.name,task, em=es$em,t=es$t, val = as.list(em$sim[t,]), tol=es$tol) {
-  restore.point("check.findPoint.answer")
-
-  symbols = task$findPoint$symbol
-  pane = em$panes[[pane.name]]
-  # wrong pane clicked
-  if (!all(symbols %in% names(pane$markers))) {
-    return(FALSE)
-  }
-
-  ref.val = unlist(val[symbols])
-
-  axis = "xy"
-  found = has.click.found(click.val = xy,ref.val = ref.val,axis = axis, tol=tol,pane=pane)
-  return(found)
-}
-
-
 

@@ -1,41 +1,13 @@
-
-
-
-load.story = function(storyId, file=paste0(storyId,".yaml"), dir=get.ec()$stories.path, text=NULL, ec = get.ec()) {
-  restore.point("load.story")
-
-  tt = load.struct(name="story",file = paste0(dir,"/",file),typeName = "story",text=text)
-  
-  obj = tt.object(tt,1)
-  parts = setdiff(names(obj),c("storyId","settings"))
-  
-  es = as.environment(c(
-    list(storyId = as.character(obj$storyId)), 
-    obj$settings,
-    list(parts = obj[parts])
-  ))
-  
-  #es = as.environment(tt.object(tt,1))
-  #es = as.environment(read.yaml(file=paste0(dir,"/",file)))
-  
-  es$yaml = attr(tt,"yaml")
-  Encoding(es$yaml) <- "UTF-8"
-
-  check.story(file = file, es=es)
-  
-  es
-}
-
 init.story = function(es, em=NULL) {
   restore.point("init.story")
-  
+
   if (is.null(em))
     em = load.model(es$modelId)
   es$em = em
   init.model(em = es$em)
-  
+
   if (is.null(es[["storyType"]])) es$storyType = "dynamics"
-  
+
   if (es$storyType=="dynamics") {
     init.dynry(es,em=em)
   } else if (es$storyType=="scenarios") {
@@ -43,8 +15,9 @@ init.story = function(es, em=NULL) {
   } else {
     stop(paste0("Unknown storyType ", es$storyType, " specified in story file." ))
   }
-  
 }
+
+
 
 story.ui = function(app=getApp(), es=app$es) {
   restore.point("story.ui")
@@ -79,7 +52,7 @@ get.story.part.task.type = function(part) {
     !is.null(part$task[[type]])
   }))
   if (length(not.null)==0) return("unknown")
-  
+
   types[not.null]
 }
 
@@ -89,4 +62,14 @@ story.part.task.symbols = function(part) {
   tasks = setdiff(names(part$task),c("pane","type") )
   symbols = unique(unlist(lapply(part$task[tasks], function(ta) ta$symbol)))
   symbols
+}
+
+init.story.pane = function(pane, curves = c(es$curves,es$em$curves),es=NULL,...) {
+  restore.point("init.story.pane")
+
+  as.environment(init.model.pane(pane=pane, curves=curves,...))
+}
+
+current.story.params = function(es) {
+  as.list(es$sim[es$sim.row,])
 }

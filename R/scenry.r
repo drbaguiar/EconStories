@@ -1,18 +1,17 @@
 examples.green.paradox = function() {
   setwd("D:/libraries/EconCurves/EconCurves")
   set.restore.point.options(display.restore.point = TRUE)
-  
+
   add.restore.point.test(scenario.test = function(env,name,...) {
     if (exists("em",env,inherits = FALSE)) {
       if (is.null(env$em) & name != "init.story") {
         stop("em is null")
-      }  
+      }
     }
   })
 
-  
-  init.ec()
-  ec = get.ec()
+
+  ES = initEconStories()
   em = load.model("GreenParadox")
   em = load.model("GreenParadox5")
   init.model(em)
@@ -20,28 +19,28 @@ examples.green.paradox = function() {
   sim = simulate.model(em,init.scen = FALSE)
   sim$scenario = "baseline"
   eval(quote(all(R == alpha*intreaty*(pmin(q_tr,100-p))+(1-alpha*intreaty)*(100-p))), sim)
-  eval(quote(alpha*intreaty*(pmin(q_tr,100-p))+(1-alpha*intreaty)*(100-p)), sim)  
+  eval(quote(alpha*intreaty*(pmin(q_tr,100-p))+(1-alpha*intreaty)*(100-p)), sim)
 
   es = load.story("GreenParadox_quiz")
-  
+
   #options(warn=3)
   sim = init.story(es)
   app = shinyScenryApp(es = es)
-  
+
   runEventsApp(app,launch.browser = rstudio::viewer)
   runEventsApp(app,launch.browser = TRUE)
-  
+
   sim = init.scenry.part(es,2)
   rbind(sim[1,],sim[21,])
   library(ggplot2)
-  
+
   ggplot(data=sim, aes(x=t,y=R,color=.scen,fill=.scen)) + geom_line(size=1.5)
   ggplot(data=sim, aes(x=t,y=cumR,color=.scen,fill=.scen)) + geom_line(size=1.2)
   ggplot(data=sim, aes(x=t,y=p,color=.scen,fill=.scen)) + geom_line(size=1.2)
   ggplot(data=sim, aes(x=t,y=m,color=.scen,fill=.scen)) + geom_line(size=1.2)
   ggplot(data=sim, aes(x=t,y=m_growth,color=.scen,fill=.scen)) + geom_line(size=1.2)
 
-  
+
 
 }
 
@@ -50,12 +49,12 @@ examples.green.paradox = function() {
 init.scenry = function(es,em=es$em,...) {
   restore.point("init.scenry")
   if (length(es$rcode)>0) {
-    ec = get.ec()
+    ES = getES()
     for (file in es$rcode)
-      source(paste0(ec$stories.path,"/",file))
+      source(paste0(ES$stories.path,"/",file))
   }
   init.scenry.part(es,1)
-  
+
 }
 
 scenry.check.question = function(answered, correct, qu,...) {
@@ -65,7 +64,7 @@ scenry.check.question = function(answered, correct, qu,...) {
     txt = "You have not yet answered the question."
     html = HTML(txt)
   } else {
-    
+
     txt = as.character(qu$expl)
     if (correct) {
       txt = paste0("<b>Correct!</b> ", txt)
@@ -80,7 +79,7 @@ scenry.check.question = function(answered, correct, qu,...) {
 
 init.scenry.part.questions = function(part) {
   restore.point("init.scenry.part.questions")
-  
+
   # init statements
   qu.ind.base = 0
   part$stas = lapply(seq_along(part$statements), function(ind) {
@@ -88,11 +87,11 @@ init.scenry.part.questions = function(part) {
     st$ui = statement.ui(st = st, check.fun=scenry.check.question)
     st
   })
-  
-  
-  
+
+
+
   ui.li = lapply(part$stas, function(st) st$ui)
-  
+
   qu.ind.base = qu.ind.base + length(part$stas)+1
   if (!is.null(part[["quiz"]])) {
     part$quizes = lapply(seq_along(part$quiz), function(i) {
@@ -102,7 +101,7 @@ init.scenry.part.questions = function(part) {
       add.quiz.handlers(qu=qu,check.fun = scenry.check.question,set.ui=FALSE)
       qu
     })
-    qu.ui.li = lapply(part$quizes, function(qu) qu$ui)  
+    qu.ui.li = lapply(part$quizes, function(qu) qu$ui)
     ui.li = c(ui.li, qu.ui.li)
   }
 
@@ -115,20 +114,20 @@ init.scenry.part.questions = function(part) {
 init.scenry.part = function(es, part.num=es$part.num) {
   restore.point("init.scenry.part")
   es$part.num = part.num
-  
+
   baseline = es$scenario
-  
+
   part = es$parts[[part.num]]
 
   part = init.scenry.part.questions(part)
-    
+
   if (!is.null(part[["scens"]])) {
     scens = lapply(part$scens, function(scen) {
       customize.baseline(baseline, scen=scen)
     })
   } else if (!is.null(part[["params"]])) {
     params = scenry.parse.params(part$params)
-    
+
     grid = expand.grid(params)
     scens = lapply(1:NROW(grid), function(i) {
       customize.baseline(baseline, params=grid[i,])
@@ -138,19 +137,19 @@ init.scenry.part = function(es, part.num=es$part.num) {
     scens = list(baseline=baseline)
   }
   es$scens = scens
-  
+
   # Simulate all scenarios
   es$sim.li = simulate.scenarios(es$em, scens, return.list=TRUE)
-  es$sim = es$em$sim = bind_rows(es$sim.li)  
+  es$sim = es$em$sim = bind_rows(es$sim.li)
 
   es$part = part
-  
+
   invisible(es$sim)
 }
 
 
 #' Simulate multiple scenarios
-#' 
+#'
 #' @param em the model
 #' @param scens a list of scenarios
 #' @param scen.params A list with different parameters used in the different scenarios
@@ -158,7 +157,7 @@ init.scenry.part = function(es, part.num=es$part.num) {
 #' @param lapply.fun the lapply function, may change e.g. to mcapply to simulate scenarioes parallely on a multicore.
 simulate.scenarios = function(em, scens=NULL, scen.params=NULL, baseline=em$scenario, return.list=FALSE,lapply.fun = lapply) {
   restore.point("simulate.scenarios")
-  
+
   if (is.null(scens) & !is.null(scen.params)) {
     grid = expand.grid(scen.params)
     scens = lapply(1:NROW(grid), function(i) {
@@ -166,7 +165,7 @@ simulate.scenarios = function(em, scens=NULL, scen.params=NULL, baseline=em$scen
     })
     names(scens) = paste0("scen", seq_along(scens))
   }
-  
+
   sim.li = lapply.fun(seq_along(scens), function(i) {
     restore.point("simulate.scenarios.inner")
     scen.name = names(scens)[i]
@@ -176,21 +175,21 @@ simulate.scenarios = function(em, scens=NULL, scen.params=NULL, baseline=em$scen
     sim
   })
   if (return.list) return(sim.li)
-  bind_rows(sim.li)  
+  bind_rows(sim.li)
 }
 
 customize.baseline = function(baseline, scen=NULL, params=list()) {
   restore.point("customize.baseline")
-  
-  
+
+
   new.scen = baseline
-  
+
   if (length(params)==0) {
     params[names(scen$params)] = scen$params
   }
   new.scen$params = overwrite.defaults(new.scen$params, params)
   new.scen$axis = overwrite.defaults(new.scen$axis, scen$axis)
-  
+
   new.scen
 }
 
@@ -204,11 +203,11 @@ overwrite.defaults = function(defaults, new) {
 
 shinyScenryApp = function(es,...) {
   restore.point("shinyStoryApp")
-  
-  library(shinyEvents)  
+
+  library(shinyEvents)
   library(shinyAce)
   library(shinyBS)
-  
+
   app = eventsApp()
   app$es = es
   ui = scenry.ui()
@@ -218,7 +217,7 @@ shinyScenryApp = function(es,...) {
     restore.point("app.initHandler")
     app$es = as.environment(as.list(es))
   }, app=app)
-  
+
   app$ui = ui
   scenry.show.part(app = app,part.num = 1, init.part=TRUE)
   app
@@ -235,7 +234,7 @@ scenry.ui = function(app=getApp(), scela) {
       uiOutput("scenryTellUI")
     ),
     column(7,
-      uiOutput("scenryOutputUI")  
+      uiOutput("scenryOutputUI")
     )
   )
   buttonHandler("scenryNextBtn", scenry.next.btn.click)
@@ -277,7 +276,7 @@ scenry.prev.btn.click = function(app=getApp(), es=app$es,...) {
 
 scenry.show.part = function(app=getApp(),es=app$es, part.num = es$part.num, init.part=!identical(es$part.num,part.num)) {
   restore.point("scenry.show.part")
-  
+
   es$part.num = part.num
   if (init.part) {
     init.scenry.part(es = es)
@@ -287,15 +286,15 @@ scenry.show.part = function(app=getApp(),es=app$es, part.num = es$part.num, init
   }
   # copy simulation into globalenv to facilitate development of plots
   assign("sim",es$sim,envir = globalenv())
-  
-  
+
+
   if (is.null(part$title)) part$title = ""
-  
+
   html = compile.part.txt(c(part$tell), es=es,out = "html")
   html = paste0("<h4>", part.num," ", part$title, "</h4>", html)
-  
+
   params.ui = scenry.part.params.ui(es=es,part.num = part.num)
-  
+
   tell.ui = list(
     HTML(html),
     params.ui,
@@ -309,7 +308,7 @@ scenry.show.part = function(app=getApp(),es=app$es, part.num = es$part.num, init
   } else {
     bg.ui = NULL
   }
-  
+
   tabs = list(
     tabPanel(title = "Sim", tell.ui)
   )
@@ -323,51 +322,51 @@ scenry.show.part = function(app=getApp(),es=app$es, part.num = es$part.num, init
     tabPanel(title = "Baseline"),
     tabPanel(title = "Model",
       aceEditor("scenryModelYamlAce",value = es$em$yaml, mode="yaml")
-    )    
+    )
   ))
 
   tabset = do.call(tabsetPanel, tabs)
-  
+
   setUI(id = "scenryTellUI", tabset)
 
   buttonHandler("scenryRunBtn", scenry.run.btn.click)
-  
-  # Show plots 
+
+  # Show plots
   output.ui = scenry.part.output.ui(es=es, part.num = part.num)
   setUI(id = "scenryOutputUI",output.ui)
   for (i in seq_along(es$plots)) {
     plotId = names(es$plots)[i]
     setPlot(id = plotId, es$plots[[i]], quoted=TRUE)
   }
-  
-  
+
+
 }
 
 scenry.part.output.ui = function(app= getApp(),es=app$es, part.num = es$part.num) {
   restore.point("scenry.output.ui")
   part = es$parts[[part.num]]
-  
+
   plots = part$plots
   if (is.null(plots)) {
     plots = es$defaults$plots
   }
   ref = names(plots)
-  
+
   rc = ref.to.rowcol(ref)
-  
+
   col.share = round((rc$colspan / max(rc$end.col)*100))
-  
+
   part$plotIds = sc("scenryPlot_",seq_along(plots),"__",col.share)
   names(plots) = part$plotIds
-  
+
 #  names(plots) = sc("scenryPlot_",seq_along(plots))
- 
-  
+
+
   if (length(plots)==0) {
     es$plots = NULL
     return(NULL)
   }
-  
+
   plots = lapply(plots, function(plot.txt) {
     if (!has.substr(plot.txt,"(")) { #)
       new.txt = paste0(plot.txt,"(es$sim)")
@@ -378,9 +377,9 @@ scenry.part.output.ui = function(app= getApp(),es=app$es, part.num = es$part.num
     }
   })
   es$plots = plots
-  
 
-  
+
+
   li = lapply(seq_along(plots), function(i) {
     plotId = part$plotIds[[i]]
     clickId = paste0("scenryPlot_",i,"__click")
@@ -396,8 +395,8 @@ scenry.part.output.ui = function(app= getApp(),es=app$es, part.num = es$part.num
 
 scenry.part.params.ui = function(app= getApp(),es=app$es, part.num = es$part.num) {
   restore.point("scenry.params.ui")
-  
-  
+
+
   part = es$parts[[part.num]]
   if (is.null(part$params) & is.null(part$scens)) return(NULL)
   if (!is.null(part$scens)) {
@@ -408,13 +407,13 @@ scenry.part.params.ui = function(app= getApp(),es=app$es, part.num = es$part.num
   }
   txt = sep.lines(yaml)
   fontSize = 12
-  height = max((fontSize * 1.5) * length(txt),30)    
+  height = max((fontSize * 1.5) * length(txt),30)
   aceEditor("scenryParamsEdit",value=yaml,mode="yaml", showLineNumbers = FALSE,height=height,debounce = 10)
 }
 
 scenry.set.params = function(app= getApp(),es=app$es) {
   restore.point("scenry.set.params")
-  
+
   part.num = es$part.num
   part = es$parts[[part.num]]
   if (is.null(part$params) & is.null(part$scens)) {
@@ -423,11 +422,11 @@ scenry.set.params = function(app= getApp(),es=app$es) {
   }
   yaml = getInputValue("scenryParamsEdit")
   cat("\n\n\n yaml:", yaml, "\n\n\n")
-  
+
   li = read.yaml(text = yaml)
 
   restore.point("scenry.set.params2")
-  
+
   if (!is.null(part$scens)) {
     for (sc in intersect(names(li), names(part$scens))) {
       vals = scenry.parse.params(li[[sc]])
@@ -435,14 +434,14 @@ scenry.set.params = function(app= getApp(),es=app$es) {
     }
   } else {
     vals = scenry.parse.params(li)
-    part$params[names(li)] = li 
+    part$params[names(li)] = li
   }
   es$parts[[part.num]] = part
 }
 
 scenry.parse.params = function(li) {
   restore.point("scenry.parse.params")
-  li = lapply(li, safe_parse_eval_number)  
+  li = lapply(li, safe_parse_eval_number)
   li
 }
 
