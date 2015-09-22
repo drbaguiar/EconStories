@@ -6,6 +6,7 @@ init.story = function(es, em=NULL) {
   es$em = em
   init.model(em = es$em)
 
+
   if (is.null(es[["storyType"]])) es$storyType = "dynamics"
 
   if (es$storyType=="dynamics") {
@@ -19,26 +20,30 @@ init.story = function(es, em=NULL) {
 
 
 
+add.story.button.handlers = function() {
+  buttonHandler("stNextBtn", dynry.next.btn.click,if.handler.exists = "skip")
+  buttonHandler("stForwardBtn", dynry.forward.btn.click,if.handler.exists = "skip")
+  buttonHandler("stPrevBtn", dynry.prev.btn.click,if.handler.exists = "skip")
+  buttonHandler("stExitBtn", exit.to.main,if.handler.exists = "skip")
+  buttonHandler("stEditBtn", edit.dynry.click,if.handler.exists = "skip")
+  buttonHandler("stRefreshBtn", refresh.dynry.click,if.handler.exists = "skip")
+}
+
+
 story.ui = function(app=getApp(), es=app$es) {
   restore.point("story.ui")
-  if (es$storyType=="dynamics") {
-    ui = dynry.ui(app=app, es=es)
-  } else if (es$storyType=="scenarios") {
-    # No need to run if ui is shown
-    ui = scenry.ui(app = app)
-  } else {
-    stop(paste0("Unknown storyType ", es$storyType, " specified in story file." ))
-  }
-  ui
+  add.story.button.handlers()
+  uiOutput("storyMainUI")
+
 }
 
 run.story = function(es) {
   restore.point("run.story")
   if (es$storyType=="dynamics") {
-    dynry.tell.part.task()
+    show.story.part(es=es)
   } else if (es$storyType=="scenarios") {
     # No need to run if ui is shown
-    scenry.show.part(part.num = 1, init.part=TRUE)
+    show.story.part(es=es)
   } else {
     stop(paste0("Unknown storyType ", es$storyType, " specified in story file." ))
   }
@@ -70,6 +75,6 @@ init.story.pane = function(pane, curves = c(es$curves,es$em$curves),es=NULL,...)
   as.environment(init.model.pane(pane=pane, curves=curves,...))
 }
 
-current.story.params = function(es) {
-  as.list(es$sim[es$sim.row,])
+current.story.values = function(es, cur=es$cur) {
+  as.list(es$sim[cur$sim.row,])
 }

@@ -7,7 +7,7 @@ examples.shiny.dynry = function() {
   es = load.story("ThreeEq_G_langfristig")
   es = load.story("SimpleLabor3EqStory")
   init.story(es)
-  #set.dynry.step(t=1,es=es)
+  set.dynry.step(t=2,es=es)
 
   app = shinyStoryApp(es)
   runEventsApp(app,launch.browser = rstudio::viewer)
@@ -36,47 +36,8 @@ shinyStoryApp = function(es,...) {
   }, app=app)
 
   app$ui = ui
-  dynry.tell.part.task()
+  show.story.part(es=es)
   app
-}
-
-dynry.ui = function(app=getApp(), es=app$es) {
-  restore.point("dynry.ui")
-  if (app$allow.edit) {
-    editBtn = actionButton("stEditBtn","Edit")
-    refreshBtn = actionButton("stRefreshBtn","Refresh")
-  } else {
-    editBtn = refreshBtn = NULL
-  }
-  ui = fluidRow(
-    column(4,
-     fluidRow(
-        actionButton("stPrevBtn","<"),
-        actionButton("stNextBtn",">"),
-        actionButton("stForwardBtn",">>"),
-        actionButton("stExitBtn","Exit"),
-        editBtn, refreshBtn
-      ),
-      uiOutput("tellUI"),
-      uiOutput("answerUI")
-    ),
-    column(8,
-      dynry.panes.ui(),
-      dygraphOutput("dygraph",height="150px")
-      #uiOutput("panesUI")
-    )
-  )
-  #setPlot("testPlot",{plot(runif(100),runif(100))})
-  #setUI(id = "panesUI",dynry.panes.ui())
-  buttonHandler("stNextBtn", dynry.next.btn.click,if.handler.exists = "skip")
-  buttonHandler("stForwardBtn", dynry.forward.btn.click,if.handler.exists = "skip")
-  buttonHandler("stPrevBtn", dynry.prev.btn.click,if.handler.exists = "skip")
-  buttonHandler("stExitBtn", exit.to.main,if.handler.exists = "skip")
-  buttonHandler("stEditBtn", edit.dynry.click,if.handler.exists = "skip")
-  buttonHandler("stRefreshBtn", refresh.dynry.click,if.handler.exists = "skip")
-
-
-  ui
 }
 
 
@@ -88,8 +49,8 @@ edit.dynry.click = function(app=getApp(), es=app$es,...) {
 
 dynry.wait.for.answer = function(app=getApp(), es=app$es) {
   restore.point("stNextBtnClicked")
-  t=es$t
-  step.num=es$step.num
+  t=es$cur$t
+  step.num=es$cur$step.num
   part = get.dynry.part(es=es,t=t, step.num=step.num)
   if (length(part$task)==0) {
     es$wait.for.answer = FALSE
@@ -136,7 +97,7 @@ shiny.pane.click = function(app=getApp(), es=app$es,pane.name,id, session, value
 
 refresh.dynry.click = function(app=getApp(), es=app$es,...) {
   cat("Refresh dynry...")
-  t = es$t; step.num = es$step.num
+  t = es$cur$t; step.num = es$cur$step.num
   id = es$storyId
   restore.point("refresh.dynry.click")
 
@@ -144,8 +105,8 @@ refresh.dynry.click = function(app=getApp(), es=app$es,...) {
   es = load.story(id)
   app$es = es
   init.story(es)
-
-  dynry.tell.part.task(t = t,step.num = step.num)
+  set.dynry.step(t=t, step.num=step.num, stage="start", es=es)
+  show.story.part(es=es)
 
 }
 
@@ -161,12 +122,7 @@ dynry.next.btn.click = function(app=getApp(), es=app$es,...) {
 
   res = dynry.next(es=es)
   if (res$end) return()
-  dynry.tell.part.task()
-
-  if (dynry.wait.for.answer(es=es))
-    return()
-
-  dynry.tell.part.sol()
+  show.story.part(es=es)
 }
 
 dynry.forward.btn.click = function(app=getApp(), es=app$es,...) {
@@ -174,10 +130,7 @@ dynry.forward.btn.click = function(app=getApp(), es=app$es,...) {
 
   dynry.forward(es, update.es=TRUE)
 
-  dynry.tell.part.task()
-  if (dynry.wait.for.answer(es=es))
-    return()
-  dynry.tell.part.sol()
+  show.story.part(es=es)
 }
 
 
@@ -185,66 +138,8 @@ dynry.prev.btn.click = function(app=getApp(), es=app$es,...)  {
   restore.point("stPrevBtnClicked")
   res = dynry.prev(es=es,update.es = TRUE)
   if (res$start) return()
-  dynry.tell.part.task()
-  dynry.tell.part.sol()
-}
-
-dynry.panes.ui = function(app=getApp(), es=app$es) {
-  restore.point("dynry.panes.ui")
-  em = es$em
-  pane.names = names(em$panes)
-  li = lapply(em$panes[pane.names], function(pane) {
-    plotId = paste0(pane$name,"_PanePlot")
-    clickId = paste0(pane$name,"_PaneClick")
-    changeHandler(id=clickId, shiny.pane.click, pane.name=pane$name)
-    plotOutput(outputId = plotId,click = clickId, width="250px",height="250px")
-  })
-  names(li) = NULL
-  ui = HTML(html.table(li,ncol=2))
-  #ui = do.call(fluidRow, li)
-  ui
-}
-
-dynry.tell.part.task = function(app=getApp(),es=app$es, t=es$t, step.num=es$step.num) {
-  restore.point("dynry.tell.part.task")
-  es$t = t; es$step.num = step.num
-
-  part = get.dynry.part(es,t,step.num)
-  html = compile.story.txt(c(part$tell,part$ask), em=es$em, t=t,out = "html")
-  html = paste0("<h4>", t,".", step.num,"</h4>", html)
-  setUI(id = "tellUI",HTML(html))
-  setUI(id = "answerUI",HTML(""))
-
-  lines = get.dynry.step.lines(es = es,t = t,step = step.num,solved=FALSE,previous.steps = TRUE)
-  shiny.plot.lines(em=es$em,lines)
-}
-
-dynry.tell.part.sol = function(app=getApp(),es=app$es, t=es$t, step.num=es$step.num) {
-  restore.point("dynry.tell.part.sol")
-
-  es$t = t; es$step.num = step.num
-
-  part = get.dynry.part(es,t,step.num)
-  html = compile.story.txt(c(part$success), em=es$em, t=t,out = "html")
-  setUI(id = "answerUI",HTML(html))
-
-  lines = get.dynry.step.lines(es = es,t = t,step = step.num,solved=TRUE,previous.steps = TRUE)
-  shiny.plot.lines(em=es$em,lines=lines)
-
-  dygraph =dynry.step.dyplot(es=es,t=t,step = step.num,solved = TRUE,vars = es$timelineVars)
-  app$output$dygraph = renderDygraph(dygraph)
-
+  show.story.part(es=es)
 }
 
 
-shiny.plot.lines = function(lines,app=getApp(), es=app$es, em=es$em,pane.names=names(em$panes),...) {
-  restore.point("shiny.plot.lines")
-  line.panes = sapply(lines, function(line) line$pane)
-  lapply(em$panes[pane.names], function(pane) {
-    plines = lines[line.panes %in% pane$name]
-    plotId = paste0(pane$name,"_PanePlot")
-    setPlot(id = plotId, plot.pane(em=em,pane=pane,lines=plines,lwd.factor=2,label.cex=1,cex.axis=1))
-  })
-  setText("plotCounter",sample(1:1000,1))
-}
 

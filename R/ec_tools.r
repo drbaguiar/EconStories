@@ -1,7 +1,7 @@
 
 replace.whiskers = function(str, env=parent.frame()) {
   restore.point("replace.whiskers")
-  
+
   pos = str.blocks.pos(str,"{{","}}")
   if (NROW(pos$outer)==0) return(str)
   s = substring(str, pos$inner[,1],pos$inner[,2])
@@ -15,16 +15,16 @@ replace.whiskers = function(str, env=parent.frame()) {
 }
 
 
-compile.story.txt = function(txt, out="text",val =as.list(em$sim[t,,drop=FALSE]),  em=NULL,t=1, digits=4) {
+compile.story.txt = function(txt, out="text",values =as.list(em$sim[t,,drop=FALSE]), digits=4) {
   restore.point("compile.story.txt")
-  
+
   if (length(txt)==0) return("")
-  
-  val = lapply(val, function(v) {
+
+  val = lapply(values, function(v) {
     if (is.numeric(v)) return(signif(v,digits))
     return(v)
-  }) 
-  
+  })
+
   txt = replace.whiskers(paste0(txt, collapse="\n"), val)
 
   if (out=="text") {
@@ -36,12 +36,12 @@ compile.story.txt = function(txt, out="text",val =as.list(em$sim[t,,drop=FALSE])
     txt
   }
   txt
-  
+
 }
 
 
 
-deparse1 = function (call, collapse = "") 
+deparse1 = function (call, collapse = "")
 {
     paste0(deparse(call, width = 500), collapse = collapse)
 }
@@ -61,9 +61,9 @@ subst.var = function(call, var, subs, subset=FALSE) {
   } else {
     sub.li = subs
   }
-      
+
   names(sub.li) = var
-  
+
   res = substitute.call(call, sub.li)
   #if (subset) res = res[[1]]
   res

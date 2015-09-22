@@ -39,7 +39,7 @@ has.click.found = function(click.val, ref.val, axis="xy", tol=0.05, tol.units=c(
 
 
 
-check.click.answer = function(es,xy,pane.name,t=es$t, step.num=es$step.num,task=NULL,...) {
+check.click.answer = function(es,xy,pane.name,t=es$cur$t, step.num=es$cur$step.num,task=NULL,...) {
   restore.point("check.click.answer")
   em = es$em
   if (is.null(task)) {

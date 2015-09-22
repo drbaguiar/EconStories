@@ -35,8 +35,6 @@ init.dynry = function(es, em=es$em, sim=NULL) {
   }
 
   es$T = NROW(es$sim)
-  es$t = es$step.num = 1
-  es$wait.for.answer = FALSE
   es$tol = 0.07
 
 
@@ -49,12 +47,12 @@ init.dynry = function(es, em=es$em, sim=NULL) {
   set.dynry.step(t=1,es=es)
 }
 
-dynry.tparts = function(es,t=es$t) {
+dynry.tparts = function(es,t=es$cur$t) {
   row = which(es$tparts.df$start.t <= t & t <= es$tparts.df$end.t)
   es$tparts.df[row,]
 }
 
-dynry.next = function(es, t=es$t, step.num=es$step.num, update.es=TRUE) {
+dynry.next = function(es, t=es$cur$t, step.num=es$cur$step.num, update.es=TRUE) {
   restore.point("dynry.next")
 
   tparts = dynry.tparts(es,t)
@@ -71,13 +69,13 @@ dynry.next = function(es, t=es$t, step.num=es$step.num, update.es=TRUE) {
   }
 
   if (update.es) {
-    set.dynry.step(t=t, step.num=step.num, solved=FALSE)
+    set.dynry.step(t=t, step.num=step.num, solved=FALSE, es=es)
   }
   return(list(t=t, step.num=step.num, end=FALSE))
 }
 
 
-dynry.prev = function(es, t=es$t, step.num=es$step.num, update.es=TRUE) {
+dynry.prev = function(es, t=es$cur$t, step.num=es$cur$step.num, update.es=TRUE) {
   restore.point("dynry.prev")
 
   start = FALSE
@@ -96,14 +94,14 @@ dynry.prev = function(es, t=es$t, step.num=es$step.num, update.es=TRUE) {
   }
 
   if (update.es) {
-    set.dynry.step(t=t, step.num=step.num, solved=TRUE)
+    set.dynry.step(t=t, step.num=step.num, solved=TRUE, es=es)
   }
 
   return(list(t=t, step.num=step.num, start=start))
 }
 
 
-dynry.forward = function(es, t = es$t, step.num = es$step.num, update.es=TRUE) {
+dynry.forward = function(es, t = es$cur$t, step.num = es$cur$step.num, update.es=TRUE) {
   restore.point("dynry.forward")
 
   tparts = dynry.tparts(es,t)
@@ -118,7 +116,7 @@ dynry.forward = function(es, t = es$t, step.num = es$step.num, update.es=TRUE) {
     solved = FALSE
   }
   if (update.es) {
-    set.dynry.step(t=t, step.num=step.num, solved=TRUE)
+    set.dynry.step(t=t, step.num=step.num, solved=TRUE, es=es)
   }
 
   return(list(t=t, step.num = step.num))
@@ -181,31 +179,9 @@ init.dynry.parts = function(es) {
     } else if (part$append[1]=="all") {
       part$append = c("show","tell")
     }
-    part$shown = c(part$show, sc("lag_", part$lagshow))
-
-    if ("show" %in% part$append)
-      part$shown = unique(c(part$show, prev.part$shown))
 
 
-    part$shown = setdiff(part$shown,c(part$hid, sc("lag_", part$laghide)))
-    part$start.symbols = part$hint.symbols = part$failure.symbols = part$shown
-
-    part$shown = unique(c(part$shown, story.part.task.symbols(part)))
-
-
-    part$success.symbols = part$shown
-
-    if ("tell" %in% part$append) {
-      if (!is.null(prev.part$tell))
-        part$tell = paste0(prev.part$tell, "\n", part$tell)
-    }
-
-    try(Encoding(part$tell) <- "UTF-8", silent=TRUE)
-    try(Encoding(part$ask) <- "UTF-8", silent=TRUE)
-    try(Encoding(part$success) <- "UTF-8", silent=TRUE)
-
-    if (!is.null(part$task))
-        part$task$type = get.story.part.task.type(part)
+    part =init.story.part(part=part, prev.part = prev.part, es=es)
 
     parts[[part.ind]] = part
     names(parts)[part.ind] = name
@@ -228,36 +204,49 @@ init.dynry.parts = function(es) {
 }
 
 
-
 set.dynry.step = function(t, step.num=1, solved=FALSE, stage=NULL, es) {
   restore.point("set.dynry.step")
 
+  es$prev = prev = es$cur
+
+  cur = list()
+
   if (is.null(stage)) {
     if (!solved) {
-      es$stage = "start"
+      cur$stage = "start"
     } else {
-      es$stage = "success"
+      cur$stage = "complete"
     }
   }
 
-  es$t = t
-  es$sim.row = es$t
-  es$step.num = step.num
+  cur$t = t
+  cur$sim.row = t
+  cur$step.num = step.num
 
-  es$part.ind =get.dynry.part.ind(es=es)
-  es$part = es$parts[[es$part.ind]]
-  es$solved = solved
+  cur$part.ind =get.dynry.part.ind(es=es, t=t, step.num=step.num)
+  cur$part = es$parts[[cur$part.ind]]
+  cur$solved = solved
 
-  es$wait.for.answer = !es$solved
+  cur$wait.for.answer  = !(length(cur$part$task)==0 | cur$solved)
+
+  cur$changed.part = !identical(cur$part.ind, prev$part.ind)
+  cur$changed.t = !identical(cur$t, prev$t)
+  cur$changed.stage = !identical(cur$stage, prev$stage)
+
+  cur$values = current.story.values(es=es,cur=cur)
+  cur$changed.values = !identical(prev$values, cur$values)
+
+
+  es$cur = cur
 }
 
-get.dynry.part.ind = function(es, t=es$t, step.num = es$step.num) {
+get.dynry.part.ind = function(es, t=es$cur$t, step.num = es$cur$step.num) {
   row = which(es$tparts.df$start.t <= t & t <= es$tparts.df$end.t)
   es$tparts.df$part[[row]][step.num]
 }
 
 
-get.dynry.part = function(es, t=es$t, step.num = es$step.num) {
+get.dynry.part = function(es, t=es$cur$t, step.num = es$cur$step.num) {
   restore.point("get.dynry.part")
   row = which(es$tparts.df$start.t <= t & t <= es$tparts.df$end.t)
   part.ind = es$tparts.df$parts[[row]][step.num]

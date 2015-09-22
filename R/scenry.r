@@ -111,9 +111,9 @@ init.scenry.part.questions = function(part) {
   part
 }
 
-init.scenry.part = function(es, part.num=es$part.num) {
+init.scenry.part = function(es, part.num=es$cur$part.num) {
   restore.point("init.scenry.part")
-  es$part.num = part.num
+  es$cur$part.num = part.num
 
   baseline = es$scenario
 
@@ -142,7 +142,7 @@ init.scenry.part = function(es, part.num=es$part.num) {
   es$sim.li = simulate.scenarios(es$em, scens, return.list=TRUE)
   es$sim = es$em$sim = bind_rows(es$sim.li)
 
-  es$part = part
+  es$cur$part = part
 
   invisible(es$sim)
 }
@@ -250,39 +250,39 @@ scenry.run.btn.click = function(app=getApp(), es=app$es,...) {
   restore.point("scenry.run.btn.click")
   res = scenry.set.params()
   restore.point("scenry.run.btn.click2")
-  scenry.show.part(es=es,part.num=es$part.num, init.part=TRUE)
+  scenry.show.part(es=es,part.num=es$cur$part.num, init.part=TRUE)
 }
 
 
 scenry.forward.btn.click = scenry.next.btn.click = function(app=getApp(), es=app$es,...) {
   restore.point("scenry.next.btn.click")
 
-  if (es$part.num == length(es$parts)) return()
+  if (es$cur$part.num == length(es$parts)) return()
 
-  es$part.num = es$part.num +1
-  scenry.show.part(es=es,part.num=es$part.num, init.part=TRUE)
+  es$cur$part.num = es$cur$part.num +1
+  scenry.show.part(es=es,part.num=es$cur$part.num, init.part=TRUE)
 }
 
 
 scenry.prev.btn.click = function(app=getApp(), es=app$es,...) {
   restore.point("scenry.prev.btn.click")
 
-  if (es$part.num == 1) return()
+  if (es$cur$part.num == 1) return()
 
-  es$part.num = es$part.num -1
-  scenry.show.part(es=es,part.num=es$part.num, init.part=TRUE)
+  es$cur$part.num = es$cur$part.num -1
+  scenry.show.part(es=es,part.num=es$cur$part.num, init.part=TRUE)
 }
 
 
-scenry.show.part = function(app=getApp(),es=app$es, part.num = es$part.num, init.part=!identical(es$part.num,part.num)) {
+scenry.show.part = function(app=getApp(),es=app$es, part.num = es$cur$part.num, init.part=!identical(es$cur$part.num,part.num)) {
   restore.point("scenry.show.part")
 
-  es$part.num = part.num
+  es$cur$part.num = part.num
   if (init.part) {
     init.scenry.part(es = es)
-    part = es$part
+    part = es$cur$part
   } else {
-    part = es$part
+    part = es$cur$part
   }
   # copy simulation into globalenv to facilitate development of plots
   assign("sim",es$sim,envir = globalenv())
@@ -342,7 +342,7 @@ scenry.show.part = function(app=getApp(),es=app$es, part.num = es$part.num, init
 
 }
 
-scenry.part.output.ui = function(app= getApp(),es=app$es, part.num = es$part.num) {
+scenry.part.output.ui = function(app= getApp(),es=app$es, part.num = es$cur$part.num) {
   restore.point("scenry.output.ui")
   part = es$parts[[part.num]]
 
@@ -393,7 +393,7 @@ scenry.part.output.ui = function(app= getApp(),es=app$es, part.num = es$part.num
   return(ui)
 }
 
-scenry.part.params.ui = function(app= getApp(),es=app$es, part.num = es$part.num) {
+scenry.part.params.ui = function(app= getApp(),es=app$es, part.num = es$cur$part.num) {
   restore.point("scenry.params.ui")
 
 
@@ -414,7 +414,7 @@ scenry.part.params.ui = function(app= getApp(),es=app$es, part.num = es$part.num
 scenry.set.params = function(app= getApp(),es=app$es) {
   restore.point("scenry.set.params")
 
-  part.num = es$part.num
+  part.num = es$cur$part.num
   part = es$parts[[part.num]]
   if (is.null(part$params) & is.null(part$scens)) {
     cat("\n\n\n EARLY RETURN...", "\n\n\n")
