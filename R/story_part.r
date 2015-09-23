@@ -135,7 +135,9 @@ init.story.part = function(part, prev.part=NULL, es=NULL) {
 
   part$layout = make.part.layout(part = part,es=es)
 
-  part$ui = story.part.ui(part=part,es = es)
+  #part$ui = story.part.ui(part=part,es = es)
+
+  part = as.environment(part)
 
   part
 }
@@ -149,6 +151,8 @@ show.story.part = function(part=es$cur$part, values=NULL, stage="start",cur=es$c
   }
 
   if (cur$changed.part | TRUE) {
+    if (is.null(part$ui))
+      part$ui = story.part.ui(part = part, es=es)
     ui = part$ui
     setUI("storyMainUI", ui)
   }
