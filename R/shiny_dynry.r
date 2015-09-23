@@ -6,11 +6,23 @@ examples.shiny.dynry = function() {
   ES = getES()
   es = load.story("ThreeEq_G_langfristig")
   es = load.story("SimpleLabor3EqStory")
+  es = load.story("InteractiveLabor3EqStory")
   init.story(es)
-  set.dynry.step(t=2,es=es)
 
   app = shinyStoryApp(es)
+  part = es$parts[[1]]
+  ui = story.part.ui(part = part,es=es)
+  addResourcePath("images",paste0(getES()$stories.path,"/images"))
   runEventsApp(app,launch.browser = rstudio::viewer)
+
+  view.html(ui)
+  html = as.character(ui)
+
+
+  set.dynry.step(t=1,es=es)
+  part = es$parts[[2]]
+  layout = part$layout
+
 
   em = es$em
   sim = em$sim
@@ -28,10 +40,14 @@ shinyStoryApp = function(es,...) {
   app$es = es
   app$allow.edit = getES()$allow.edit
   ui = story.ui()
-  ui = fluidPage(title = es$storyId,ui)
+  ui = fluidPage(
+    title = es$storyId,
+    ui
+  )
 
   appInitHandler(initHandler = function(app,...) {
     restore.point("app.initHandler")
+    addResourcePath("images",paste0(getES()$stories.path,"/images"))
     app$es = es
   }, app=app)
 

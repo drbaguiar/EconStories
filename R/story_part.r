@@ -94,7 +94,7 @@ plot.part.pane = function(part=es$cur$part, pane=es$panes[[1]], values=current.s
 plot.part.panes = function(part=es$cur$part,app=getApp(), es=app$es, pane.names=names(es$panes),...) {
   restore.point("plot.part.panes")
   lapply(es$panes[pane.names], function(pane) {
-    plotId = paste0(pane$name,"_PanePlot")
+    plotId = paste0(pane$name,"_PlotPane")
     setPlot(id = plotId, plot.part.pane(es=es,pane=pane,part=part))
   })
   setText("plotCounter",sample(1:1000,1))
@@ -102,6 +102,9 @@ plot.part.panes = function(part=es$cur$part,app=getApp(), es=app$es, pane.names=
 
 init.story.part = function(part, prev.part=NULL, es=NULL) {
   restore.point("init.story.part")
+
+  if (is.null(part$layout))
+    part$layout = prev.part$layout
 
   part$shown = c(part$show, sc("lag_", part$lagshow))
 
@@ -117,8 +120,6 @@ init.story.part = function(part, prev.part=NULL, es=NULL) {
 
   part$complete.symbols = part$shown
 
-  part$has.rhs = length(part$shown)>0
-
   try(Encoding(part$tell) <- "UTF-8", silent=TRUE)
   try(Encoding(part$ask) <- "UTF-8", silent=TRUE)
   try(Encoding(part$success) <- "UTF-8", silent=TRUE)
@@ -132,6 +133,8 @@ init.story.part = function(part, prev.part=NULL, es=NULL) {
 
   if (!is.null(part$task))
       part$task$type = get.story.part.task.type(part)
+
+  part
 
   part$layout = make.part.layout(part = part,es=es)
 

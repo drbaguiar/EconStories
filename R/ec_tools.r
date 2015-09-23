@@ -1,3 +1,24 @@
+copy.into.missing.fields = function(dest, source) {
+  restore.point("copy.into.empty.fields")
+
+  new.fields = setdiff(names(source), names(dest))
+  dest[new.fields] = source[new.fields]
+  dest
+}
+
+view.html = function(html) {
+  file = tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".html")
+  html = as.character(html)
+  writeLines(html, file)
+  rstudio::viewer(url = file)
+}
+
+lapply.with.name = function(X, FUN,...) {
+  lapply(seq_along(X), function(ind) {
+    FUN(X[[ind]],name=names(X)[ind],...)
+  })
+}
+
 
 replace.whiskers = function(str, env=parent.frame()) {
   restore.point("replace.whiskers")
