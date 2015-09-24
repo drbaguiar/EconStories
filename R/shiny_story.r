@@ -1,16 +1,16 @@
 
-examples.shiny.dynry = function() {
+examples.shiny.story = function() {
   set.restore.point.options(display.restore.point = TRUE)
   setwd("D:/libraries/EconStories/EconStories")
   initEconStories()
   ES = getES()
   es = load.story("ThreeEq_G_langfristig")
   es = load.story("SimpleLabor3EqStory")
-  es = load.story("InteractiveLabor3EqStory")
+  es = load.story("PhillipsCurveIntroStory")
   init.story(es)
 
   app = shinyStoryApp(es)
-  part = es$parts[[1]]
+  part = es$parts[[2]]
   ui = story.part.ui(part = part,es=es)
   addResourcePath("images",paste0(getES()$stories.path,"/images"))
   runEventsApp(app,launch.browser = rstudio::viewer)
@@ -57,17 +57,26 @@ shinyStoryApp = function(es,...) {
 }
 
 
-edit.dynry.click = function(app=getApp(), es=app$es,...) {
-  restore.point("edit.dynry.click")
-  cat("Edit Story...")
+add.story.button.handlers = function() {
+  buttonHandler("stNextBtn", story.next.btn.click,if.handler.exists = "skip")
+  buttonHandler("stForwardBtn", story.forward.btn.click,if.handler.exists = "skip")
+  buttonHandler("stPrevBtn", story.prev.btn.click,if.handler.exists = "skip")
+  buttonHandler("stExitBtn", exit.to.main,if.handler.exists = "skip")
+  buttonHandler("stRefreshBtn", story.refresh.click,if.handler.exists = "skip")
+}
+
+
+story.ui = function(app=getApp(), es=app$es) {
+  restore.point("story.ui")
+  add.story.button.handlers()
+  uiOutput("storyMainUI")
 
 }
 
-dynry.wait.for.answer = function(app=getApp(), es=app$es) {
-  restore.point("stNextBtnClicked")
-  t=es$cur$t
-  step.num=es$cur$step.num
-  part = get.dynry.part(es=es,t=t, step.num=step.num)
+
+story.wait.for.answer = function(app=getApp(), es=app$es) {
+  restore.point("story.wait.for.answer")
+  part = es$cur$part
   if (length(part$task)==0) {
     es$wait.for.answer = FALSE
     return(FALSE)
@@ -77,21 +86,21 @@ dynry.wait.for.answer = function(app=getApp(), es=app$es) {
   return(TRUE)
 }
 
-dynry.process.click.answer = function(app=getApp(), es=app$es,xy, pane.name,...) {
-  restore.point("dynry.check.click.answer")
+story.process.click.answer = function(app=getApp(), es=app$es,xy, pane.name,...) {
+  restore.point("story.check.click.answer")
   res = check.click.answer(es = es,xy = xy,pane.name = pane.name)
 
   # correct
   if (res) {
     es$wait.for.answer = FALSE
-    dynry.tell.part.sol()
+    story.tell.part.sol()
   } else {
     es$attempts = es$attempts+1
     setUI(id = "answerUI",p(paste0("Not correct. (", es$attempts, " attempts.)")))
   }
 }
 
-shiny.pane.click = function(app=getApp(), es=app$es,pane.name,id, session, value,...) {
+story.pane.click = function(app=getApp(), es=app$es,pane.name,id, session, value,...) {
   #args = list(...)
   restore.point("shiny.pane.click")
   if (length(value)==0)
@@ -103,31 +112,29 @@ shiny.pane.click = function(app=getApp(), es=app$es,pane.name,id, session, value
 
   # outside a task just continue
   if (!is.true(es$wait.for.answer)) {
-    dynry.next.btn.click()
+    story.next.btn.click()
   } else {
-    dynry.process.click.answer(app = app,es=es,xy = xy,pane.name = pane.name)
+    story.process.click.answer(app = app,es=es,xy = xy,pane.name = pane.name)
   }
   #cat("Click!")
 }
 
 
-refresh.dynry.click = function(app=getApp(), es=app$es,...) {
-  cat("Refresh dynry...")
+story.refresh.click = function(app=getApp(), es=app$es,...) {
+  cat("Refresh story...")
   t = es$cur$t; step.num = es$cur$step.num
   id = es$storyId
-  restore.point("refresh.dynry.click")
+  restore.point("refresh.story.click")
 
   # reload and init story
   es = load.story(id)
   app$es = es
   init.story(es)
-  set.dynry.step(t=t, step.num=step.num, stage="start", es=es)
+  set.story.cur(es=es, cur=cur)
   show.story.part(es=es)
-
 }
 
-
-dynry.next.btn.click = function(app=getApp(), es=app$es,...) {
+story.next.btn.click = function(app=getApp(), es=app$es,...) {
   restore.point("stNextBtnClicked")
   #cat("stNextBtn was clicked...")
 
@@ -136,23 +143,36 @@ dynry.next.btn.click = function(app=getApp(), es=app$es,...) {
     return()
   }
 
-  res = dynry.next(es=es)
+  if (es$storyType == "dynamics") {
+    res = set.dynry.next.part(es=es)
+  } else {
+    res = set.story.next.part(es=es)
+  }
   if (res$end) return()
   show.story.part(es=es)
 }
 
-dynry.forward.btn.click = function(app=getApp(), es=app$es,...) {
-  restore.point("dynry.forward.btn.click")
+story.forward.btn.click = function(app=getApp(), es=app$es,...) {
+  restore.point("story.forward.btn.click")
 
-  dynry.forward(es, update.es=TRUE)
+  if (es$storyType == "dynamics") {
+    res = set.dynry.forward.part(es=es)
+  } else {
+    res = set.story.forward.part(es=es)
+  }
 
   show.story.part(es=es)
 }
 
 
-dynry.prev.btn.click = function(app=getApp(), es=app$es,...)  {
+story.prev.btn.click = function(app=getApp(), es=app$es,...)  {
   restore.point("stPrevBtnClicked")
-  res = dynry.prev(es=es,update.es = TRUE)
+
+  if (es$storyType == "dynamics") {
+    res = set.dynry.prev.part(es=es)
+  } else {
+    res = set.story.prev.part(es=es)
+  }
   if (res$start) return()
   show.story.part(es=es)
 }

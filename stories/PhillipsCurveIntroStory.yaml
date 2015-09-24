@@ -1,48 +1,17 @@
-storyId: InteractiveLabor3EqStory
+storyId: PhillipsCurveIntroStory
 
 settings:
-  title: Illustrating the 3 equation model
+  title: An introduction to the Phillips curve
   descr:
-  panels:
-    mainpanel:
-      title: "Main"
-      panes:
-        labour_market: 1A
-
-  scenario:
-    T: 30
-    axis:
-      y_: [2500,3500]
-      w_: [1.5,2.5]
-      W_: [10,30]
-      pi_: [-0.05,0.1]
-    init_mode: steady_state
-    init:
-      #mu: 0.1
-      w_min: 1
-      w_slope: 1 / 4000
-      lambda: 2
-      y: 3000
-      pi: 0.02
-      lag_pi: pi
-      lag_P: 10 / 1.02
-    shocks:
-      y_up:
-        descr: Demand increases
-        effects:
-          y: 'y*1.1'
-        start: 2
-        duration: 2
-  timelineVars: [y,Epi,pi,P,w]
-  lang: en
-  start_t: 2
-
-Period 1:
+  storyType: free
+  layout:
+    showpanes:
+    left_cols: 6
 
 nachfrage_schock_quiz:
   layout:
     showpanes:
-    left.cols: 6
+    left_cols: 6
   tell: |
     Nehme Sie an, die meisten
     Firmen eines Landes

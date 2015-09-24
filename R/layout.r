@@ -1,11 +1,11 @@
 default.layout = function() {
   list(
-    left.cols = 4,
-    left.margin = 0,
-    right.margin = 0,
-    plot.height = "250px",
-    plot.width = "250px",
-    portrait.height = "100px"
+    left_cols = 4,
+    left_margin = 0,
+    right_margin = 0,
+    plot_height = "250px",
+    plot_width = "250px",
+    portrait_height = "100px"
   )
 }
 
@@ -33,7 +33,7 @@ make.part.layout = function(part,layout=list(), fill.layouts = list(part$layout,
 
 
 #  if (isTRUE(!part$has.rhs))
-#    set.none.null(left.cols=10, left.margin=1, right.margin=1)
+#    set.none.null(left_cols=10, left_margin=1, right_margin=1)
 
   set.missing(pane.cols = max(1,min(2, layout$num.rhs)))
 
@@ -44,10 +44,11 @@ make.part.layout = function(part,layout=list(), fill.layouts = list(part$layout,
 story.part.ui = function(part=NULL,layout = part$layout, allow.edit=getES()$allow.edit, es) {
   restore.point("story.part.ui")
 
-  right.cols = 12 - layout$left.cols - layout$left.margin - layout$right.margin
+  right.cols = 12 - layout$left_cols - layout$left_margin - layout$right_margin
 
   if (isTRUE(allow.edit)) {
-    editBtn = actionButton("stEditBtn","Edit")
+    #editBtn = actionButton("stEditBtn","Edit")
+    editBtn = NULL
     refreshBtn = actionButton("stRefreshBtn","Refresh")
   } else {
     editBtn = refreshBtn = NULL
@@ -60,7 +61,7 @@ story.part.ui = function(part=NULL,layout = part$layout, allow.edit=getES()$allo
       editBtn, refreshBtn
   )
   if (is.null(layout$button.pos)) {
-    if (layout$left.cols>=3) {
+    if (layout$left_cols>=3) {
       layout$button.pos = "top-left"
     } else {
       layout$button.pos = "top"
@@ -72,9 +73,9 @@ story.part.ui = function(part=NULL,layout = part$layout, allow.edit=getES()$allo
     return(NULL)
   }
 
-  if (layout$left.cols >0) {
+  if (layout$left_cols >0) {
     left.col =  column(
-      width = layout$left.cols, offset=layout$left.margin,
+      width = layout$left_cols, offset=layout$left_margin,
       get.buttons("top-left"),
       uiOutput("tellUI"),
       uiOutput("answerUI"),
@@ -115,7 +116,7 @@ story.portraits.ui = function(part,es) {
     file.name = image
     str = paste0(
     '<figure>
-       <img src="',file.name,'" alt="', name,'" style="height:',layout$portrait.height,';width:auto;">
+       <img src="',file.name,'" alt="', name,'" style="height:',layout$portrait_height,';width:auto;">
       <figcaption>',name,'</figcaption>
     </figure>'
     )
@@ -137,7 +138,7 @@ story.part.rhs.ui = function(part, es) {
     id = paste0(pane$name,"_PlotPane")
     clickId = paste0(pane$name,"_PlotPaneClick")
     changeHandler(id=clickId, shiny.pane.click, pane.name=pane$name)
-    plotOutput(outputId = id,click = clickId, width=layout$plot.width,height=layout$plot.height)
+    plotOutput(outputId = id,click = clickId, width=layout$plot_width,height=layout$plot_height)
   })
 
   images.li = lapply.with.name(part$images, function(image, name) {

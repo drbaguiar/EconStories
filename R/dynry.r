@@ -52,8 +52,8 @@ dynry.tparts = function(es,t=es$cur$t) {
   es$tparts.df[row,]
 }
 
-dynry.next = function(es, t=es$cur$t, step.num=es$cur$step.num, update.es=TRUE) {
-  restore.point("dynry.next")
+set.dynry.next.part = function(es, t=es$cur$t, step.num=es$cur$step.num, update.es=TRUE) {
+  restore.point("set.dynry.next.part")
 
   tparts = dynry.tparts(es,t)
 
@@ -75,8 +75,8 @@ dynry.next = function(es, t=es$cur$t, step.num=es$cur$step.num, update.es=TRUE) 
 }
 
 
-dynry.prev = function(es, t=es$cur$t, step.num=es$cur$step.num, update.es=TRUE) {
-  restore.point("dynry.prev")
+set.dynry.prev.part = function(es, t=es$cur$t, step.num=es$cur$step.num, update.es=TRUE) {
+  restore.point("set.dynry.prev.part")
 
   start = FALSE
   if (step.num > 1) {
@@ -101,8 +101,8 @@ dynry.prev = function(es, t=es$cur$t, step.num=es$cur$step.num, update.es=TRUE) 
 }
 
 
-dynry.forward = function(es, t = es$cur$t, step.num = es$cur$step.num, update.es=TRUE) {
-  restore.point("dynry.forward")
+set.dynry.forward.part = function(es, t = es$cur$t, step.num = es$cur$step.num, update.es=TRUE) {
+  restore.point("set.dynry.forward.part")
 
   tparts = dynry.tparts(es,t)
   if (tparts$row == NROW(es$tparts.df)) {
@@ -204,12 +204,10 @@ init.dynry.parts = function(es) {
 }
 
 
-set.dynry.step = function(t, step.num=1, solved=FALSE, stage=NULL, es) {
+set.dynry.step = function(t=cur$t, step.num=cur$step.num, solved=cur$solved, stage=cur$stage, es, cur=list(step.num=1, solved=FALSE)) {
   restore.point("set.dynry.step")
 
   es$prev = prev = es$cur
-
-  cur = list()
 
   if (is.null(stage)) {
     if (!solved) {
