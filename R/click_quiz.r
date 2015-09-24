@@ -43,8 +43,8 @@ check.click.answer = function(es,xy,pane.name,t=es$cur$t, step.num=es$cur$step.n
   restore.point("check.click.answer")
   em = es$em
   if (is.null(task)) {
-    part = get.dynry.part(es,t, step.num)
-    task = part$task
+    frame = get.dynry.frame(es,t, step.num)
+    task = frame$task
   }
   if (task$type == "shift") {
     ret = check.shift.answer(es=es,xy=xy,em=em,t=t,task=task, pane.name=pane.name)

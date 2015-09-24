@@ -55,12 +55,12 @@ load.story = function(storyId, file=paste0(storyId,".yaml"), dir=getES()$stories
   tt = load.struct(name="story",file = paste0(dir,"/",file),typeName = "story",text=text,types = ES$types)
 
   obj = tt.object(tt,1)
-  parts = setdiff(names(obj),c("storyId","settings"))
+  frames = setdiff(names(obj),c("storyId","settings"))
 
   es = as.environment(c(
     list(storyId = as.character(obj$storyId)),
     obj$settings,
-    list(parts = obj[parts])
+    list(frames = obj[frames])
   ))
 
   #es = as.environment(tt.object(tt,1))

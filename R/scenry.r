@@ -30,7 +30,7 @@ examples.green.paradox = function() {
   runEventsApp(app,launch.browser = rstudio::viewer)
   runEventsApp(app,launch.browser = TRUE)
 
-  sim = init.scenry.part(es,2)
+  sim = init.scenry.frame(es,2)
   rbind(sim[1,],sim[21,])
   library(ggplot2)
 
@@ -53,7 +53,7 @@ init.scenry = function(es,em=es$em,...) {
     for (file in es$rcode)
       source(paste0(ES$stories.path,"/",file))
   }
-  init.scenry.part(es,1)
+  init.scenry.frame(es,1)
 
 }
 
@@ -71,62 +71,62 @@ scenry.check.question = function(answered, correct, qu,...) {
     } else {
       txt = paste0("<b>Not correct.</b> ",txt)
     }
-    txt = compile.part.txt(txt)
+    txt = compile.frame.txt(txt)
     html = wellPanel(HTML(txt))
   }
   setUI(qu$explId,html)
 }
 
-init.scenry.part.questions = function(part) {
-  restore.point("init.scenry.part.questions")
+init.scenry.frame.questions = function(frame) {
+  restore.point("init.scenry.frame.questions")
 
   # init statements
   qu.ind.base = 0
-  part$stas = lapply(seq_along(part$statements), function(ind) {
-    st = init.statement(part$statements[[ind]],qu.ind = ind+qu.ind.base)
+  frame$stas = lapply(seq_along(frame$statements), function(ind) {
+    st = init.statement(frame$statements[[ind]],qu.ind = ind+qu.ind.base)
     st$ui = statement.ui(st = st, check.fun=scenry.check.question)
     st
   })
 
 
 
-  ui.li = lapply(part$stas, function(st) st$ui)
+  ui.li = lapply(frame$stas, function(st) st$ui)
 
-  qu.ind.base = qu.ind.base + length(part$stas)+1
-  if (!is.null(part[["quiz"]])) {
-    part$quizes = lapply(seq_along(part$quiz), function(i) {
-      qu = part$quiz[[i]]
+  qu.ind.base = qu.ind.base + length(frame$stas)+1
+  if (!is.null(frame[["quiz"]])) {
+    frame$quizes = lapply(seq_along(frame$quiz), function(i) {
+      qu = frame$quiz[[i]]
       qu = init.quiz(qu, quiz.id = paste0("scenry_quiz__",i))
       qu$ui = quiz.ui(qu,in.well.panel = FALSE)
       add.quiz.handlers(qu=qu,check.fun = scenry.check.question,set.ui=FALSE)
       qu
     })
-    qu.ui.li = lapply(part$quizes, function(qu) qu$ui)
+    qu.ui.li = lapply(frame$quizes, function(qu) qu$ui)
     ui.li = c(ui.li, qu.ui.li)
   }
 
   names(ui.li) = NULL
-  part$qu.ui = ui.li
-  if (length(part$qu.ui)==0) part$qu.ui = NULL
-  part
+  frame$qu.ui = ui.li
+  if (length(frame$qu.ui)==0) frame$qu.ui = NULL
+  frame
 }
 
-init.scenry.part = function(es, part.num=es$cur$part.num) {
-  restore.point("init.scenry.part")
-  es$cur$part.num = part.num
+init.scenry.frame = function(es, frame.num=es$cur$frame.num) {
+  restore.point("init.scenry.frame")
+  es$cur$frame.num = frame.num
 
   baseline = es$scenario
 
-  part = es$parts[[part.num]]
+  frame = es$frames[[frame.num]]
 
-  part = init.scenry.part.questions(part)
+  frame = init.scenry.frame.questions(frame)
 
-  if (!is.null(part[["scens"]])) {
-    scens = lapply(part$scens, function(scen) {
+  if (!is.null(frame[["scens"]])) {
+    scens = lapply(frame$scens, function(scen) {
       customize.baseline(baseline, scen=scen)
     })
-  } else if (!is.null(part[["params"]])) {
-    params = scenry.parse.params(part$params)
+  } else if (!is.null(frame[["params"]])) {
+    params = scenry.parse.params(frame$params)
 
     grid = expand.grid(params)
     scens = lapply(1:NROW(grid), function(i) {
@@ -142,7 +142,7 @@ init.scenry.part = function(es, part.num=es$cur$part.num) {
   es$sim.li = simulate.scenarios(es$em, scens, return.list=TRUE)
   es$sim = es$em$sim = bind_rows(es$sim.li)
 
-  es$cur$part = part
+  es$cur$frame = frame
 
   invisible(es$sim)
 }
@@ -219,7 +219,7 @@ shinyScenryApp = function(es,...) {
   }, app=app)
 
   app$ui = ui
-  scenry.show.part(app = app,part.num = 1, init.part=TRUE)
+  scenry.show.frame(app = app,frame.num = 1, init.frame=TRUE)
   app
 }
 
@@ -250,50 +250,50 @@ scenry.run.btn.click = function(app=getApp(), es=app$es,...) {
   restore.point("scenry.run.btn.click")
   res = scenry.set.params()
   restore.point("scenry.run.btn.click2")
-  scenry.show.part(es=es,part.num=es$cur$part.num, init.part=TRUE)
+  scenry.show.frame(es=es,frame.num=es$cur$frame.num, init.frame=TRUE)
 }
 
 
 scenry.forward.btn.click = scenry.next.btn.click = function(app=getApp(), es=app$es,...) {
   restore.point("scenry.next.btn.click")
 
-  if (es$cur$part.num == length(es$parts)) return()
+  if (es$cur$frame.num == length(es$frames)) return()
 
-  es$cur$part.num = es$cur$part.num +1
-  scenry.show.part(es=es,part.num=es$cur$part.num, init.part=TRUE)
+  es$cur$frame.num = es$cur$frame.num +1
+  scenry.show.frame(es=es,frame.num=es$cur$frame.num, init.frame=TRUE)
 }
 
 
 scenry.prev.btn.click = function(app=getApp(), es=app$es,...) {
   restore.point("scenry.prev.btn.click")
 
-  if (es$cur$part.num == 1) return()
+  if (es$cur$frame.num == 1) return()
 
-  es$cur$part.num = es$cur$part.num -1
-  scenry.show.part(es=es,part.num=es$cur$part.num, init.part=TRUE)
+  es$cur$frame.num = es$cur$frame.num -1
+  scenry.show.frame(es=es,frame.num=es$cur$frame.num, init.frame=TRUE)
 }
 
 
-scenry.show.part = function(app=getApp(),es=app$es, part.num = es$cur$part.num, init.part=!identical(es$cur$part.num,part.num)) {
-  restore.point("scenry.show.part")
+scenry.show.frame = function(app=getApp(),es=app$es, frame.num = es$cur$frame.num, init.frame=!identical(es$cur$frame.num,frame.num)) {
+  restore.point("scenry.show.frame")
 
-  es$cur$part.num = part.num
-  if (init.part) {
-    init.scenry.part(es = es)
-    part = es$cur$part
+  es$cur$frame.num = frame.num
+  if (init.frame) {
+    init.scenry.frame(es = es)
+    frame = es$cur$frame
   } else {
-    part = es$cur$part
+    frame = es$cur$frame
   }
   # copy simulation into globalenv to facilitate development of plots
   assign("sim",es$sim,envir = globalenv())
 
 
-  if (is.null(part$title)) part$title = ""
+  if (is.null(frame$title)) frame$title = ""
 
-  html = compile.part.txt(c(part$tell), es=es,out = "html")
-  html = paste0("<h4>", part.num," ", part$title, "</h4>", html)
+  html = compile.frame.txt(c(frame$tell), es=es,out = "html")
+  html = paste0("<h4>", frame.num," ", frame$title, "</h4>", html)
 
-  params.ui = scenry.part.params.ui(es=es,part.num = part.num)
+  params.ui = scenry.frame.params.ui(es=es,frame.num = frame.num)
 
   tell.ui = list(
     HTML(html),
@@ -301,9 +301,9 @@ scenry.show.part = function(app=getApp(),es=app$es, part.num = es$cur$part.num, 
     actionButton("scenryRunBtn","Run")
   )
 
-  if (length(part$background)>0) {
-    bg.ui = compile.part.txt(c(part$background), es=es,out = "html")
-    bg.ui = paste0("<h4>", part.num," ", part$title, "</h4>", bg.ui)
+  if (length(frame$background)>0) {
+    bg.ui = compile.frame.txt(c(frame$background), es=es,out = "html")
+    bg.ui = paste0("<h4>", frame.num," ", frame$title, "</h4>", bg.ui)
     bg.ui = HTML(bg.ui)
   } else {
     bg.ui = NULL
@@ -312,8 +312,8 @@ scenry.show.part = function(app=getApp(),es=app$es, part.num = es$cur$part.num, 
   tabs = list(
     tabPanel(title = "Sim", tell.ui)
   )
-  if (!is.null(part$qu.ui)) {
-    tabs = c(tabs,list(tabPanel(title = "Quiz", part$qu.ui)))
+  if (!is.null(frame$qu.ui)) {
+    tabs = c(tabs,list(tabPanel(title = "Quiz", frame$qu.ui)))
   }
   if (!is.null(bg.ui)) {
     tabs = c(tabs,list(tabPanel(title = "Background", bg.ui)))
@@ -332,7 +332,7 @@ scenry.show.part = function(app=getApp(),es=app$es, part.num = es$cur$part.num, 
   buttonHandler("scenryRunBtn", scenry.run.btn.click)
 
   # Show plots
-  output.ui = scenry.part.output.ui(es=es, part.num = part.num)
+  output.ui = scenry.frame.output.ui(es=es, frame.num = frame.num)
   setUI(id = "scenryOutputUI",output.ui)
   for (i in seq_along(es$plots)) {
     plotId = names(es$plots)[i]
@@ -342,11 +342,11 @@ scenry.show.part = function(app=getApp(),es=app$es, part.num = es$cur$part.num, 
 
 }
 
-scenry.part.output.ui = function(app= getApp(),es=app$es, part.num = es$cur$part.num) {
+scenry.frame.output.ui = function(app= getApp(),es=app$es, frame.num = es$cur$frame.num) {
   restore.point("scenry.output.ui")
-  part = es$parts[[part.num]]
+  frame = es$frames[[frame.num]]
 
-  plots = part$plots
+  plots = frame$plots
   if (is.null(plots)) {
     plots = es$defaults$plots
   }
@@ -356,8 +356,8 @@ scenry.part.output.ui = function(app= getApp(),es=app$es, part.num = es$cur$part
 
   col.share = round((rc$colspan / max(rc$end.col)*100))
 
-  part$plotIds = sc("scenryPlot_",seq_along(plots),"__",col.share)
-  names(plots) = part$plotIds
+  frame$plotIds = sc("scenryPlot_",seq_along(plots),"__",col.share)
+  names(plots) = frame$plotIds
 
 #  names(plots) = sc("scenryPlot_",seq_along(plots))
 
@@ -381,7 +381,7 @@ scenry.part.output.ui = function(app= getApp(),es=app$es, part.num = es$cur$part
 
 
   li = lapply(seq_along(plots), function(i) {
-    plotId = part$plotIds[[i]]
+    plotId = frame$plotIds[[i]]
     clickId = paste0("scenryPlot_",i,"__click")
     #changeHandler(id=clickId, shiny.pane.click, pane.name=pane$name)
     plotOutput(outputId = plotId,click = clickId, width="100%",height="250px")
@@ -393,17 +393,17 @@ scenry.part.output.ui = function(app= getApp(),es=app$es, part.num = es$cur$part
   return(ui)
 }
 
-scenry.part.params.ui = function(app= getApp(),es=app$es, part.num = es$cur$part.num) {
+scenry.frame.params.ui = function(app= getApp(),es=app$es, frame.num = es$cur$frame.num) {
   restore.point("scenry.params.ui")
 
 
-  part = es$parts[[part.num]]
-  if (is.null(part$params) & is.null(part$scens)) return(NULL)
-  if (!is.null(part$scens)) {
-    li = lapply(part$scens, function(scen) scen$params)
+  frame = es$frames[[frame.num]]
+  if (is.null(frame$params) & is.null(frame$scens)) return(NULL)
+  if (!is.null(frame$scens)) {
+    li = lapply(frame$scens, function(scen) scen$params)
     yaml = as.yaml(li)
   } else {
-    yaml = as.yaml(part$params)
+    yaml = as.yaml(frame$params)
   }
   txt = sep.lines(yaml)
   fontSize = 12
@@ -414,9 +414,9 @@ scenry.part.params.ui = function(app= getApp(),es=app$es, part.num = es$cur$part
 scenry.set.params = function(app= getApp(),es=app$es) {
   restore.point("scenry.set.params")
 
-  part.num = es$cur$part.num
-  part = es$parts[[part.num]]
-  if (is.null(part$params) & is.null(part$scens)) {
+  frame.num = es$cur$frame.num
+  frame = es$frames[[frame.num]]
+  if (is.null(frame$params) & is.null(frame$scens)) {
     cat("\n\n\n EARLY RETURN...", "\n\n\n")
     return(NULL)
   }
@@ -427,16 +427,16 @@ scenry.set.params = function(app= getApp(),es=app$es) {
 
   restore.point("scenry.set.params2")
 
-  if (!is.null(part$scens)) {
-    for (sc in intersect(names(li), names(part$scens))) {
+  if (!is.null(frame$scens)) {
+    for (sc in intersect(names(li), names(frame$scens))) {
       vals = scenry.parse.params(li[[sc]])
-      part$scens[[sc]]$params[names(li[[sc]])] = vals
+      frame$scens[[sc]]$params[names(li[[sc]])] = vals
     }
   } else {
     vals = scenry.parse.params(li)
-    part$params[names(li)] = li
+    frame$params[names(li)] = li
   }
-  es$parts[[part.num]] = part
+  es$frames[[frame.num]] = frame
 }
 
 scenry.parse.params = function(li) {
@@ -445,7 +445,7 @@ scenry.parse.params = function(li) {
   li
 }
 
-compile.part.txt = function(txt, es=NULL, out="html") {
+compile.frame.txt = function(txt, es=NULL, out="html") {
   if (out=="text") {
     txt = gsub("$","",txt, fixed=TRUE)
   } else if (out=="html") {

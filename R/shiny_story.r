@@ -10,8 +10,8 @@ examples.shiny.story = function() {
   init.story(es)
 
   app = shinyStoryApp(es)
-  part = es$parts[[2]]
-  ui = story.part.ui(part = part,es=es)
+  frame = es$frames[[2]]
+  ui = story.frame.ui(frame = frame,es=es)
   addResourcePath("images",paste0(getES()$stories.path,"/images"))
   runEventsApp(app,launch.browser = rstudio::viewer)
 
@@ -20,8 +20,8 @@ examples.shiny.story = function() {
 
 
   set.dynry.step(t=1,es=es)
-  part = es$parts[[2]]
-  layout = part$layout
+  frame = es$frames[[2]]
+  layout = frame$layout
 
 
   em = es$em
@@ -52,7 +52,7 @@ shinyStoryApp = function(es,...) {
   }, app=app)
 
   app$ui = ui
-  show.story.part(es=es)
+  show.story.frame(es=es)
   app
 }
 
@@ -76,8 +76,8 @@ story.ui = function(app=getApp(), es=app$es) {
 
 story.wait.for.answer = function(app=getApp(), es=app$es) {
   restore.point("story.wait.for.answer")
-  part = es$cur$part
-  if (length(part$task)==0) {
+  frame = es$cur$frame
+  if (length(frame$task)==0) {
     es$wait.for.answer = FALSE
     return(FALSE)
   }
@@ -93,7 +93,7 @@ story.process.click.answer = function(app=getApp(), es=app$es,xy, pane.name,...)
   # correct
   if (res) {
     es$wait.for.answer = FALSE
-    story.tell.part.sol()
+    story.tell.frame.sol()
   } else {
     es$attempts = es$attempts+1
     setUI(id = "answerUI",p(paste0("Not correct. (", es$attempts, " attempts.)")))
@@ -131,7 +131,7 @@ story.refresh.click = function(app=getApp(), es=app$es,...) {
   app$es = es
   init.story(es)
   set.story.cur(es=es, cur=cur)
-  show.story.part(es=es)
+  show.story.frame(es=es)
 }
 
 story.next.btn.click = function(app=getApp(), es=app$es,...) {
@@ -144,24 +144,24 @@ story.next.btn.click = function(app=getApp(), es=app$es,...) {
   }
 
   if (es$storyType == "dynamics") {
-    res = set.dynry.next.part(es=es)
+    res = set.dynry.next.frame(es=es)
   } else {
-    res = set.story.next.part(es=es)
+    res = set.story.next.frame(es=es)
   }
   if (res$end) return()
-  show.story.part(es=es)
+  show.story.frame(es=es)
 }
 
 story.forward.btn.click = function(app=getApp(), es=app$es,...) {
   restore.point("story.forward.btn.click")
 
   if (es$storyType == "dynamics") {
-    res = set.dynry.forward.part(es=es)
+    res = set.dynry.forward.frame(es=es)
   } else {
-    res = set.story.forward.part(es=es)
+    res = set.story.forward.frame(es=es)
   }
 
-  show.story.part(es=es)
+  show.story.frame(es=es)
 }
 
 
@@ -169,12 +169,12 @@ story.prev.btn.click = function(app=getApp(), es=app$es,...)  {
   restore.point("stPrevBtnClicked")
 
   if (es$storyType == "dynamics") {
-    res = set.dynry.prev.part(es=es)
+    res = set.dynry.prev.frame(es=es)
   } else {
-    res = set.story.prev.part(es=es)
+    res = set.story.prev.frame(es=es)
   }
   if (res$start) return()
-  show.story.part(es=es)
+  show.story.frame(es=es)
 }
 
 

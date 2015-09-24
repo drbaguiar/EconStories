@@ -10,7 +10,7 @@ examples.dynry = function() {
   step.num = 0
   step.num = step.num +1
   set.dynry.step(t=2, step.num=step.num, es=es)
-  plot.part.pane(es=es)
+  plot.frame.pane(es=es)
 
   #dyplot.timelines(em$sim,cols = c(em$var.names,"A"),em = em)
 
@@ -42,22 +42,22 @@ init.dynry = function(es, em=es$em, sim=NULL) {
   panes = lapply(es$panes, init.story.pane, es=es)
   es$panes = c(lapply(em$panes, as.environment), panes)
 
-  init.dynry.parts(es)
+  init.dynry.frames(es)
 
   set.dynry.step(t=1,es=es)
 }
 
-dynry.tparts = function(es,t=es$cur$t) {
-  row = which(es$tparts.df$start.t <= t & t <= es$tparts.df$end.t)
-  es$tparts.df[row,]
+dynry.tframes = function(es,t=es$cur$t) {
+  row = which(es$tframes.df$start.t <= t & t <= es$tframes.df$end.t)
+  es$tframes.df[row,]
 }
 
-set.dynry.next.part = function(es, t=es$cur$t, step.num=es$cur$step.num, update.es=TRUE) {
-  restore.point("set.dynry.next.part")
+set.dynry.next.frame = function(es, t=es$cur$t, step.num=es$cur$step.num, update.es=TRUE) {
+  restore.point("set.dynry.next.frame")
 
-  tparts = dynry.tparts(es,t)
+  tframes = dynry.tframes(es,t)
 
-  if (step.num < tparts$num.parts) {
+  if (step.num < tframes$num.frames) {
     step.num = step.num+1
   } else {
     if (t<es$T) {
@@ -75,8 +75,8 @@ set.dynry.next.part = function(es, t=es$cur$t, step.num=es$cur$step.num, update.
 }
 
 
-set.dynry.prev.part = function(es, t=es$cur$t, step.num=es$cur$step.num, update.es=TRUE) {
-  restore.point("set.dynry.prev.part")
+set.dynry.prev.frame = function(es, t=es$cur$t, step.num=es$cur$step.num, update.es=TRUE) {
+  restore.point("set.dynry.prev.frame")
 
   start = FALSE
   if (step.num > 1) {
@@ -84,8 +84,8 @@ set.dynry.prev.part = function(es, t=es$cur$t, step.num=es$cur$step.num, update.
   } else {
     if (t>1) {
       t = t-1
-      tparts = dynry.tparts(es,t)
-      step.num = tparts$num.parts
+      tframes = dynry.tframes(es,t)
+      step.num = tframes$num.frames
     } else {
       t = 1
       step.num = 1
@@ -101,17 +101,17 @@ set.dynry.prev.part = function(es, t=es$cur$t, step.num=es$cur$step.num, update.
 }
 
 
-set.dynry.forward.part = function(es, t = es$cur$t, step.num = es$cur$step.num, update.es=TRUE) {
-  restore.point("set.dynry.forward.part")
+set.dynry.forward.frame = function(es, t = es$cur$t, step.num = es$cur$step.num, update.es=TRUE) {
+  restore.point("set.dynry.forward.frame")
 
-  tparts = dynry.tparts(es,t)
-  if (tparts$row == NROW(es$tparts.df)) {
+  tframes = dynry.tframes(es,t)
+  if (tframes$row == NROW(es$tframes.df)) {
     t = es$T
-    step.num = tparts$num.parts
+    step.num = tframes$num.frames
     solved = TRUE
   } else {
-    row = tparts$row+1
-    t = es$tparts.df$start.t[[row]]
+    row = tframes$row+1
+    t = es$tframes.df$start.t[[row]]
     step.num = 1
     solved = FALSE
   }
@@ -123,21 +123,21 @@ set.dynry.forward.part = function(es, t = es$cur$t, step.num = es$cur$step.num, 
 }
 
 
-init.dynry.parts = function(es) {
-  restore.point("init.dynry.parts")
+init.dynry.frames = function(es) {
+  restore.point("init.dynry.frames")
   #period = es$periods[[2]]
-  prev.part = list(t=0, shown=NULL)
+  prev.frame = list(t=0, shown=NULL)
   step.num = 0
-  part.ind = 0
-  part.names = names(es$parts)
-  parts = vector("list",length(es$parts))
+  frame.ind = 0
+  frame.names = names(es$frames)
+  frames = vector("list",length(es$frames))
 
   i = 1
   hvals = list(t=1,section=NULL)
 
   while(TRUE) {
-    if (i>length(es$parts)) break
-    name = part.names[i]
+    if (i>length(es$frames)) break
+    name = frame.names[i]
 
     if (str.starts.with(name,"Period ")) {
       i = i+1
@@ -151,54 +151,54 @@ init.dynry.parts = function(es) {
       next
     }
 
-    part = es$parts[[i]]
-    part.ind = part.ind+1
+    frame = es$frames[[i]]
+    frame.ind = frame.ind+1
 
     for (var in names(hvals)) {
-      if (is.null(part[[var]])) {
+      if (is.null(frame[[var]])) {
         if (!is.null(hvals[[var]])) {
-          part[[var]] = hvals[[var]]
+          frame[[var]] = hvals[[var]]
         } else {
-          part[[var]] = prev.part[[var]]
+          frame[[var]] = prev.frame[[var]]
         }
       }
     }
     hvals = lapply(hvals, function(val) NULL)
-    same.t = part$t == prev.part$t
+    same.t = frame$t == prev.frame$t
     if (same.t) {
       step.num = step.num +1
     } else {
       step.num = 1
     }
 
-    # If is part of the same period,
+    # If is frame of the same period,
     # by default copy shown curves
-    if (is.null(part$append)) {
+    if (is.null(frame$append)) {
       if (same.t)
-        part$append = c("show")
-    } else if (part$append[1]=="all") {
-      part$append = c("show","tell")
+        frame$append = c("show")
+    } else if (frame$append[1]=="all") {
+      frame$append = c("show","tell")
     }
 
 
-    part =init.story.part(part=part, prev.part = prev.part, es=es)
+    frame =init.story.frame(frame=frame, prev.frame = prev.frame, es=es)
 
-    parts[[part.ind]] = part
-    names(parts)[part.ind] = name
-    prev.part = part
+    frames[[frame.ind]] = frame
+    names(frames)[frame.ind] = name
+    prev.frame = frame
     i = i+1
   }
 
-  es$parts = parts[1:part.ind]
+  es$frames = frames[1:frame.ind]
 
-  t.vec = sapply(es$parts, function(part) part$t)
+  t.vec = sapply(es$frames, function(frame) frame$t)
 
   start.t = unique(t.vec)
   end.t = c(start.t[-1]-1, Inf)
-  parts = lapply(start.t, function(t) which(t.vec==t))
-  num.parts = sapply(parts, function(ps) length(ps))
+  frames = lapply(start.t, function(t) which(t.vec==t))
+  num.frames = sapply(frames, function(ps) length(ps))
 
-  es$tparts.df = data_frame(row=seq_along(start.t),start.t = start.t, end.t = end.t, parts = parts, num.parts=num.parts)
+  es$tframes.df = data_frame(row=seq_along(start.t),start.t = start.t, end.t = end.t, frames = frames, num.frames=num.frames)
 
   es
 }
@@ -221,13 +221,13 @@ set.dynry.step = function(t=cur$t, step.num=cur$step.num, solved=cur$solved, sta
   cur$sim.row = t
   cur$step.num = step.num
 
-  cur$part.ind =get.dynry.part.ind(es=es, t=t, step.num=step.num)
-  cur$part = es$parts[[cur$part.ind]]
+  cur$frame.ind =get.dynry.frame.ind(es=es, t=t, step.num=step.num)
+  cur$frame = es$frames[[cur$frame.ind]]
   cur$solved = solved
 
-  cur$wait.for.answer  = !(length(cur$part$task)==0 | cur$solved)
+  cur$wait.for.answer  = !(length(cur$frame$task)==0 | cur$solved)
 
-  cur$changed.part = !identical(cur$part.ind, prev$part.ind)
+  cur$changed.frame = !identical(cur$frame.ind, prev$frame.ind)
   cur$changed.t = !identical(cur$t, prev$t)
   cur$changed.stage = !identical(cur$stage, prev$stage)
 
@@ -238,17 +238,17 @@ set.dynry.step = function(t=cur$t, step.num=cur$step.num, solved=cur$solved, sta
   es$cur = cur
 }
 
-get.dynry.part.ind = function(es, t=es$cur$t, step.num = es$cur$step.num) {
-  row = which(es$tparts.df$start.t <= t & t <= es$tparts.df$end.t)
-  es$tparts.df$part[[row]][step.num]
+get.dynry.frame.ind = function(es, t=es$cur$t, step.num = es$cur$step.num) {
+  row = which(es$tframes.df$start.t <= t & t <= es$tframes.df$end.t)
+  es$tframes.df$frame[[row]][step.num]
 }
 
 
-get.dynry.part = function(es, t=es$cur$t, step.num = es$cur$step.num) {
-  restore.point("get.dynry.part")
-  row = which(es$tparts.df$start.t <= t & t <= es$tparts.df$end.t)
-  part.ind = es$tparts.df$parts[[row]][step.num]
-  es$parts[[part.ind]]
+get.dynry.frame = function(es, t=es$cur$t, step.num = es$cur$step.num) {
+  restore.point("get.dynry.frame")
+  row = which(es$tframes.df$start.t <= t & t <= es$tframes.df$end.t)
+  frame.ind = es$tframes.df$frames[[row]][step.num]
+  es$frames[[frame.ind]]
 }
 
 dynry.step.dyplot = function(es, t, step, solved=FALSE, previous.steps=TRUE, pane.names = names(es$em$panes), vars = names(es$em$vars)) {

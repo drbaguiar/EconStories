@@ -1,6 +1,6 @@
 examples.quiz = function() {
     yaml = '
-parts:
+frames:
   - question: What is 20*20?
     choices:
         - 100
@@ -41,133 +41,133 @@ init.quiz = function(qu, quiz.id=paste0("quiz_",sample.int(10e10,1))) {
   if (is.null(qu[["id"]])) {
     qu$id = quiz.id
   }
-  if (is.null(qu$parts)) {
-    qu$parts = list(qu)
+  if (is.null(qu$frames)) {
+    qu$frames = list(qu)
   }
   
-  qu$parts = lapply(seq_along(qu$parts), function(ind) init.quiz.part(qu$parts[[ind]],ind,qu))
+  qu$frames = lapply(seq_along(qu$frames), function(ind) init.quiz.frame(qu$frames[[ind]],ind,qu))
   
   qu    
   
 }
 
-init.quiz.part = function(part, part.ind=1, qu=NULL) {
-  restore.point("init.quiz.part")
+init.quiz.frame = function(frame, frame.ind=1, qu=NULL) {
+  restore.point("init.quiz.frame")
   
-  if (!is.null(part$choices)) {
-    correct.choices = which(str.ends.with(part$choices,"*"))
-    if (is.null(part$multiple)) {
-      part$multiple = length(correct.choices) != 1
+  if (!is.null(frame$choices)) {
+    correct.choices = which(str.ends.with(frame$choices,"*"))
+    if (is.null(frame$multiple)) {
+      frame$multiple = length(correct.choices) != 1
     }
-    part$correct.choices = correct.choices
-    part$choices[correct.choices] = str.remove.ends(part$choices[correct.choices],right=1)
-    part$answer = unlist(part$choices[correct.choices])
-    names(part$choices) =NULL
-    if (part$multiple) {
-      part$type = "mc"
+    frame$correct.choices = correct.choices
+    frame$choices[correct.choices] = str.remove.ends(frame$choices[correct.choices],right=1)
+    frame$answer = unlist(frame$choices[correct.choices])
+    names(frame$choices) =NULL
+    if (frame$multiple) {
+      frame$type = "mc"
     } else {
-      part$type = "sc"
+      frame$type = "sc"
     }
-  } else if (!is.null(part$answer)) {
-    if (is.numeric(part$answer)) {
-      part$type = "numeric"
-      if (is.null(part$roundto)) part$roundto=0
+  } else if (!is.null(frame$answer)) {
+    if (is.numeric(frame$answer)) {
+      frame$type = "numeric"
+      if (is.null(frame$roundto)) frame$roundto=0
     } else {
-      part$type = "text"
+      frame$type = "text"
     }
   } else {
-    stop(paste0("The quiz with question ", part$question, " has neither defined the field 'answer' nor the field 'choices'."))
+    stop(paste0("The quiz with question ", frame$question, " has neither defined the field 'answer' nor the field 'choices'."))
   } 
   
-  expl = part[["expl"]]
+  expl = frame[["expl"]]
   if (!is.null(expl))
     expl = markdownToHTML(text=expl,encoding = "UTF-8", fragment.only=TRUE)
   
-  if (is.null(part$success)) {
-    part$success = paste0("<p><b>Correct.</b>",expl,"</p>")
+  if (is.null(frame$success)) {
+    frame$success = paste0("<p><b>Correct.</b>",expl,"</p>")
   } else {
-    part$success =  markdownToHTML(text=part$success,encoding = "UTF-8", fragment.only=TRUE)
+    frame$success =  markdownToHTML(text=frame$success,encoding = "UTF-8", fragment.only=TRUE)
   }
-  if (is.null(part$failure)) {
-    part$failure = paste0("<p><b>Not correct.</b>",expl,"</p>")
+  if (is.null(frame$failure)) {
+    frame$failure = paste0("<p><b>Not correct.</b>",expl,"</p>")
   } else {
-    part$failure =  markdownToHTML(text=part$failure,encoding = "UTF-8", fragment.only=TRUE)
+    frame$failure =  markdownToHTML(text=frame$failure,encoding = "UTF-8", fragment.only=TRUE)
   }
   
   
-  part$id = paste0(qu$id,"__part", part.ind) 
-  part$inputId = paste0(part$id,"__answer")
-  part$checkBtnId = paste0(part$id,"__checkBtn")
-  part$explId = paste0(part$id,"__explainUI")
-  part$ui = quiz.part.ui(part)
+  frame$id = paste0(qu$id,"__frame", frame.ind) 
+  frame$inputId = paste0(frame$id,"__answer")
+  frame$checkBtnId = paste0(frame$id,"__checkBtn")
+  frame$explId = paste0(frame$id,"__explainUI")
+  frame$ui = quiz.frame.ui(frame)
 
   
-  part
+  frame
 }
 
 quiz.ui = function(qu, in.well.panel=TRUE) {
   
   if (in.well.panel) {
-    pli = lapply(qu$parts, function(part) {
-      wellPanel(part$ui)
+    pli = lapply(qu$frames, function(frame) {
+      wellPanel(frame$ui)
     })
   } else {
-    pli = lapply(qu$parts, function(part) {
-      part$ui
+    pli = lapply(qu$frames, function(frame) {
+      frame$ui
     })
   }
   pli
 }
 
-quiz.part.ui = function(part) {
+quiz.frame.ui = function(frame) {
   head = list(
-    HTML(paste0("<hr>",part$question))
+    HTML(paste0("<hr>",frame$question))
   )
-  if (part$type=="numeric") {
-    answer = numericInput(part$inputId, label = "",value = NULL)  
-  } else if (part$type =="text") {
-    answer = textInput(part$inputId, label = "",value = "")  
-  } else if (part$type=="mc") {
-    answer = checkboxGroupInput(part$inputId, "",part$choices)
-  } else if (part$type=="sc") {
-    answer = radioButtons(part$inputId, "",part$choices, selected=NA)
+  if (frame$type=="numeric") {
+    answer = numericInput(frame$inputId, label = "",value = NULL)  
+  } else if (frame$type =="text") {
+    answer = textInput(frame$inputId, label = "",value = "")  
+  } else if (frame$type=="mc") {
+    answer = checkboxGroupInput(frame$inputId, "",frame$choices)
+  } else if (frame$type=="sc") {
+    answer = radioButtons(frame$inputId, "",frame$choices, selected=NA)
   }
   
-  button = bsButton(part$checkBtnId,label = "check", size="small")
-  setUI(part$explId,NULL)
-  list(head,answer,button, uiOutput(part$explId))
+  button = bsButton(frame$checkBtnId,label = "check", size="small")
+  setUI(frame$explId,NULL)
+  list(head,answer,button, uiOutput(frame$explId))
   
 }
 
 add.quiz.handlers = function(qu, check.fun=NULL, set.ui=TRUE){
   restore.point("add.quiz.handlers")
-  for (part in qu$parts) {
-    buttonHandler(part$checkBtnId,fun = click.check.quiz, part=part, qu=qu, check.fun=check.fun, set.ui=set.ui)
+  for (frame in qu$frames) {
+    buttonHandler(frame$checkBtnId,fun = click.check.quiz, frame=frame, qu=qu, check.fun=check.fun, set.ui=set.ui)
   }
 }
 
-click.check.quiz = function(app=getApp(), part, qu,check.fun=NULL, set.ui=TRUE, tol=1e-8, ...) {
-  answer = getInputValue(part$inputId)
+click.check.quiz = function(app=getApp(), frame, qu,check.fun=NULL, set.ui=TRUE, tol=1e-8, ...) {
+  answer = getInputValue(frame$inputId)
   restore.point("click.check.quiz")
   
-  if (part$type =="numeric") {
+  if (frame$type =="numeric") {
     answer = as.numeric(answer)
-    correct = is.true(abs(answer-part$answer)<=max(part$roundto,tol))
+    correct = is.true(abs(answer-frame$answer)<=max(frame$roundto,tol))
   } else {
-    correct = setequal(answer,part$answer)
+    correct = setequal(answer,frame$answer)
   }
   
   if (set.ui) {
     if (correct) {
       cat("Correct!")
-      setUI(part$explId,HTML(part$success))
+      setUI(frame$explId,HTML(frame$success))
     } else {
       cat("Wrong")
-      setUI(part$explId,HTML(part$failure))
+      setUI(frame$explId,HTML(frame$failure))
     }
   }
   if (!is.null(check.fun)) {
-    check.fun(qu=part,answered=TRUE,correct=correct)
+    check.fun(qu=frame,answered=TRUE,correct=correct)
   }
 }
 

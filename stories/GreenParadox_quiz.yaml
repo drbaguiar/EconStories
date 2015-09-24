@@ -20,7 +20,7 @@ descr: |
   of the interest rate on the path of fossil fuel extraction which is tightly
   linked to the path of CO2 emmissions.
 
-  Then the effects of climate treaties in which parts of the world participate
+  Then the effects of climate treaties in which frames of the world frameicipate
   are studied. 
   If treaty states reduce their demand, world-wide fossil fuel prices go down, 
   and as a reaction non-treaty states tend to burn more fossil fuels.
@@ -60,7 +60,7 @@ defaults:
 
 title: 'Hotelling Model, Carbon Leakage and the Green Paradoxon'
 
-parts:
+frames:
   start:
     title: 'Hotelling Model: Effect of interest rate'  
     tell: |
@@ -176,13 +176,13 @@ parts:
           the Hotelling model only yields sensible results if we hae
           have a strictly positive interest rate.
   leakage1:
-    title: 'Partial climate treaty and Carbon Leakage'  
+    title: 'frameial climate treaty and Carbon Leakage'  
     tell: |
-      Let us now compare the effects of a partial climate treaty.
+      Let us now compare the effects of a frameial climate treaty.
       We assume that the world consists of a large numbers of identical
       countries that use fosil fuels and thereby pollute the atmossphere with CO2.
       
-      A fraction `alpha` of the world's countries, shall particpate in a climate 
+      A fraction `alpha` of the world's countries, shall frameicpate in a climate 
       treaty that restricts their use of fosil fuels to a level `start_q_tr`.
       For now, we assume that the treaty starts immediately.
       
@@ -192,7 +192,7 @@ parts:
     background: |
       
       We see how the treaty reduces the total CO2 emmissions compared to the
-      scenario without any treaty. However, part of the
+      scenario without any treaty. However, frame of the
       reduction in the treaty countries is offset by the increased emmissions in
       the non-treaty countries.
       
@@ -211,7 +211,7 @@ parts:
     quiz:
       Q1:
         question: |
-          If 50% of the world participates in a treaty that caps their CO2 emmissions
+          If 50% of the world frameicipates in a treaty that caps their CO2 emmissions
           at 50% of their emmission in period t=1 without any treaty (business-as-usual),
           by how much will the treaty reduce **world wide** CO2 emmission in t=1 compared to 
           no treaty?
@@ -245,15 +245,15 @@ parts:
       4: plot_vs_timeline(., var="cumR", title= "Cummulated Extraction by Country")
 
   leakage2:
-    title: Carbon Leakage in Partial Climate Treaty
+    title: Carbon Leakage in frameial Climate Treaty
     tell: |
       We now study more systematically how for a given climate treaty
       that obliges member states to emmit at most `start_q_tr`,
       the world wide CO2 emmissions vary as a function of the fraction
-      of the world that participates in the treaty.
+      of the world that frameicipates in the treaty.
       
       You can see from the plot that only with sufficiently large
-      participation there is a reduction of total CO2 emmissions.
+      frameicipation there is a reduction of total CO2 emmissions.
 
     plots: 
         1A: scenPlot(.,x="alpha",y="R",t=1,title="Extraction in first period")

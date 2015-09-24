@@ -33,21 +33,21 @@ init.story = function(es, em=NULL) {
 run.story = function(es) {
   restore.point("run.story")
   if (es$storyType=="dynamics") {
-    show.story.part(es=es)
+    show.story.frame(es=es)
   } else if (es$storyType=="scenarios") {
     # No need to run if ui is shown
-    show.story.part(es=es)
+    show.story.frame(es=es)
   } else {
     stop(paste0("Unknown storyType ", es$storyType, " specified in story file." ))
   }
 }
 
 
-get.story.part.task.type = function(part) {
+get.story.frame.task.type = function(frame) {
   restore.point("get.story.step.task.type")
   types = c("find","shift","select","findPoint")
   not.null = which(sapply(types, function(type) {
-    !is.null(part$task[[type]])
+    !is.null(frame$task[[type]])
   }))
   if (length(not.null)==0) return("unknown")
 
@@ -55,10 +55,10 @@ get.story.part.task.type = function(part) {
 }
 
 
-story.part.task.symbols = function(part) {
+story.frame.task.symbols = function(frame) {
   restore.point("step.task.symbols")
-  tasks = setdiff(names(part$task),c("pane","type") )
-  symbols = unique(unlist(lapply(part$task[tasks], function(ta) ta$symbol)))
+  tasks = setdiff(names(frame$task),c("pane","type") )
+  symbols = unique(unlist(lapply(frame$task[tasks], function(ta) ta$symbol)))
   symbols
 }
 
@@ -79,25 +79,25 @@ set.story.cur = function(es, cur=es$cur) {
 
 
 init.free.story = function(es) {
-  init.free.story.parts(es=es)
-  set.story.part(part.ind=1, es=es)
+  init.free.story.frames(es=es)
+  set.story.frame(frame.ind=1, es=es)
 }
 
 
-init.free.story.parts = function(es) {
-  restore.point("init.free.story.parts")
+init.free.story.frames = function(es) {
+  restore.point("init.free.story.frames")
 
-  prev.part = list(shown=NULL)
-  part.ind = 0
-  part.names = names(es$parts)
-  parts = vector("list",length(es$parts))
+  prev.frame = list(shown=NULL)
+  frame.ind = 0
+  frame.names = names(es$frames)
+  frames = vector("list",length(es$frames))
 
   i = 1
   hvals = list(section=NULL)
 
   while(TRUE) {
-    if (i>length(es$parts)) break
-    name = part.names[i]
+    if (i>length(es$frames)) break
+    name = frame.names[i]
 
     if (str.starts.with(name,"Section ")) {
       i = i +1
@@ -105,73 +105,73 @@ init.free.story.parts = function(es) {
       next
     }
 
-    part = es$parts[[i]]
-    part.ind = part.ind+1
+    frame = es$frames[[i]]
+    frame.ind = frame.ind+1
 
     for (var in names(hvals)) {
-      if (is.null(part[[var]])) {
+      if (is.null(frame[[var]])) {
         if (!is.null(hvals[[var]])) {
-          part[[var]] = hvals[[var]]
+          frame[[var]] = hvals[[var]]
         } else {
-          part[[var]] = prev.part[[var]]
+          frame[[var]] = prev.frame[[var]]
         }
       }
     }
     hvals = lapply(hvals, function(val) NULL)
 
-    if (!is.null(part$append)) {
-      if (part$append[[1]]=="all") {
-        part$append = c("show","tell")
+    if (!is.null(frame$append)) {
+      if (frame$append[[1]]=="all") {
+        frame$append = c("show","tell")
       }
     }
 
-    part =init.story.part(part=part, prev.part = prev.part, es=es)
+    frame =init.story.frame(frame=frame, prev.frame = prev.frame, es=es)
 
-    parts[[part.ind]] = part
-    names(parts)[part.ind] = name
-    prev.part = part
+    frames[[frame.ind]] = frame
+    names(frames)[frame.ind] = name
+    prev.frame = frame
     i = i+1
   }
 
-  es$parts = parts[1:part.ind]
+  es$frames = frames[1:frame.ind]
 
   es
 
 }
 
-set.story.next.part = function(es, part.ind = es$cur$part.ind, update.es=TRUE) {
-  restore.point("set.story.next.part")
-  part.ind = min(part.ind+1, length(es$parts))
+set.story.next.frame = function(es, frame.ind = es$cur$frame.ind, update.es=TRUE) {
+  restore.point("set.story.next.frame")
+  frame.ind = min(frame.ind+1, length(es$frames))
   if (update.es) {
-    set.story.part(part.ind=part.ind, es=es)
+    set.story.frame(frame.ind=frame.ind, es=es)
   }
-  return(list(part.ind=part.ind, end= part.ind==length(es$parts) ))
+  return(list(frame.ind=frame.ind, end= frame.ind==length(es$frames) ))
 }
 
 
-set.story.prev.part = function(es, part.ind = es$cur$part.ind, update.es=TRUE) {
-  restore.point("set.story.prev.part")
-  part.ind = max(part.ind-1, 1)
+set.story.prev.frame = function(es, frame.ind = es$cur$frame.ind, update.es=TRUE) {
+  restore.point("set.story.prev.frame")
+  frame.ind = max(frame.ind-1, 1)
   if (update.es) {
-    set.story.part(part.ind=part.ind, es=es)
+    set.story.frame(frame.ind=frame.ind, es=es)
   }
-  return(list(part.ind=part.ind, start=part.ind==1))
+  return(list(frame.ind=frame.ind, start=frame.ind==1))
 }
 
 
-set.story.forward.part = function(es, part.ind = es$cur$part.ind, update.es=TRUE) {
-  restore.point("set.story.forward.part")
-  part.ind = min(part.ind+1, length(es$parts))
+set.story.forward.frame = function(es, frame.ind = es$cur$frame.ind, update.es=TRUE) {
+  restore.point("set.story.forward.frame")
+  frame.ind = min(frame.ind+1, length(es$frames))
   if (update.es) {
-    set.story.part(part.ind=part.ind, es=es)
+    set.story.frame(frame.ind=frame.ind, es=es)
   }
-  return(list(part.ind=part.ind, end= part.ind==length(es$parts) ))
+  return(list(frame.ind=frame.ind, end= frame.ind==length(es$frames) ))
 }
 
 
 
-set.story.part = function(part.ind,es, solved=FALSE, stage=NULL) {
-  restore.point("set.story.part")
+set.story.frame = function(frame.ind,es, solved=FALSE, stage=NULL) {
+  restore.point("set.story.frame")
 
   es$prev = prev = es$cur
 
@@ -185,13 +185,13 @@ set.story.part = function(part.ind,es, solved=FALSE, stage=NULL) {
     }
   }
 
-  cur$part.ind = part.ind
-  cur$part = es$parts[[cur$part.ind]]
+  cur$frame.ind = frame.ind
+  cur$frame = es$frames[[cur$frame.ind]]
   cur$solved = solved
 
-  cur$wait.for.answer  = !(length(cur$part$task)==0 | cur$solved)
+  cur$wait.for.answer  = !(length(cur$frame$task)==0 | cur$solved)
 
-  cur$changed.part = !identical(cur$part.ind, prev$part.ind)
+  cur$changed.frame = !identical(cur$frame.ind, prev$frame.ind)
   cur$changed.stage = !identical(cur$stage, prev$stage)
 
   cur$values = current.story.values(es=es,cur=cur)

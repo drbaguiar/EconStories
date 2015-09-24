@@ -9,9 +9,9 @@ check.story = function(file=NULL, es=NULL) {
 
   if (!is.null(es$scenario)) {
     assert(!is.null(es$scenario$T))
-    # shocks must be part of the scenario
+    # shocks must be frame of the scenario
     assert(is.null(es$shocks))
-    # T must be part of the scenario$T
+    # T must be frame of the scenario$T
     assert(is.null(es$T))
   }
 

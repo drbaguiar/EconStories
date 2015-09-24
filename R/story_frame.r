@@ -1,4 +1,4 @@
-# Part stages
+# frame stages
 # start, complete, hint, failure
 
 make.lag.object = function(obj, prefix = "lag_", ...) {
@@ -66,10 +66,10 @@ add.pane.lag.objects = function(pane,syms, prefix = "lag_") {
   pane
 }
 
-compute.part.pane.geoms = function(part, pane, stage="start", values=current.story.values(es), es=NULL) {
-  restore.point("compute.part.pane.geoms")
+compute.frame.pane.geoms = function(frame, pane, stage="start", values=current.story.values(es), es=NULL) {
+  restore.point("compute.frame.pane.geoms")
 
-  syms = part[[paste0(stage,".symbols")]]
+  syms = frame[[paste0(stage,".symbols")]]
 
   pane = add.pane.lag.objects(pane=pane, syms=syms,prefix = "lag_")
 
@@ -82,86 +82,86 @@ compute.part.pane.geoms = function(part, pane, stage="start", values=current.sto
   geoms
 }
 
-plot.part.pane = function(part=es$cur$part, pane=es$panes[[1]], values=current.story.values(es), es=NULL) {
-  restore.point("plot.part.pane")
+plot.frame.pane = function(frame=es$cur$frame, pane=es$panes[[1]], values=current.story.values(es), es=NULL) {
+  restore.point("plot.frame.pane")
 
 
-  geoms = compute.part.pane.geoms(part=part, pane=pane, values=values, es=es)
+  geoms = compute.frame.pane.geoms(frame=frame, pane=pane, values=values, es=es)
 
   plot.pane(pane, geoms=geoms)
 }
 
-plot.part.panes = function(part=es$cur$part,app=getApp(), es=app$es, pane.names=names(es$panes),...) {
-  restore.point("plot.part.panes")
+plot.frame.panes = function(frame=es$cur$frame,app=getApp(), es=app$es, pane.names=names(es$panes),...) {
+  restore.point("plot.frame.panes")
   lapply(es$panes[pane.names], function(pane) {
     plotId = paste0(pane$name,"_PlotPane")
-    setPlot(id = plotId, plot.part.pane(es=es,pane=pane,part=part))
+    setPlot(id = plotId, plot.frame.pane(es=es,pane=pane,frame=frame))
   })
   setText("plotCounter",sample(1:1000,1))
 }
 
-init.story.part = function(part, prev.part=NULL, es=NULL) {
-  restore.point("init.story.part")
+init.story.frame = function(frame, prev.frame=NULL, es=NULL) {
+  restore.point("init.story.frame")
 
-  if (is.null(part$layout))
-    part$layout = prev.part$layout
+  if (is.null(frame$layout))
+    frame$layout = prev.frame$layout
 
-  part$shown = c(part$show, sc("lag_", part$lagshow))
+  frame$shown = c(frame$show, sc("lag_", frame$lagshow))
 
-  if ("show" %in% part$append)
-    part$shown = unique(c(part$show, prev.part$shown))
-
-
-  part$shown = setdiff(part$shown,c(part$hid, sc("lag_", part$laghide)))
-  part$start.symbols = part$hint.symbols = part$failure.symbols = part$shown
-
-  part$shown = unique(c(part$shown, story.part.task.symbols(part)))
+  if ("show" %in% frame$append)
+    frame$shown = unique(c(frame$show, prev.frame$shown))
 
 
-  part$complete.symbols = part$shown
+  frame$shown = setdiff(frame$shown,c(frame$hid, sc("lag_", frame$laghide)))
+  frame$start.symbols = frame$hint.symbols = frame$failure.symbols = frame$shown
 
-  try(Encoding(part$tell) <- "UTF-8", silent=TRUE)
-  try(Encoding(part$ask) <- "UTF-8", silent=TRUE)
-  try(Encoding(part$success) <- "UTF-8", silent=TRUE)
+  frame$shown = unique(c(frame$shown, story.frame.task.symbols(frame)))
 
 
-  if ("tell" %in% part$append) {
-    if (!is.null(prev.part$tell))
-      part$tell = paste0(prev.part$tell, "\n", part$tell)
+  frame$complete.symbols = frame$shown
+
+  try(Encoding(frame$tell) <- "UTF-8", silent=TRUE)
+  try(Encoding(frame$ask) <- "UTF-8", silent=TRUE)
+  try(Encoding(frame$success) <- "UTF-8", silent=TRUE)
+
+
+  if ("tell" %in% frame$append) {
+    if (!is.null(prev.frame$tell))
+      frame$tell = paste0(prev.frame$tell, "\n", frame$tell)
   }
 
 
-  if (!is.null(part$task))
-      part$task$type = get.story.part.task.type(part)
+  if (!is.null(frame$task))
+      frame$task$type = get.story.frame.task.type(frame)
 
-  part
+  frame
 
-  part$layout = make.part.layout(part = part,es=es)
+  frame$layout = make.frame.layout(frame = frame,es=es)
 
-  #part$ui = story.part.ui(part=part,es = es)
+  #frame$ui = story.frame.ui(frame=frame,es = es)
 
-  part = as.environment(part)
+  frame = as.environment(frame)
 
-  part
+  frame
 }
 
-show.story.part = function(part=es$cur$part, values=NULL, stage="start",cur=es$cur, es=NULL) {
-  restore.point("show.story.part")
+show.story.frame = function(frame=es$cur$frame, values=NULL, stage="start",cur=es$cur, es=NULL) {
+  restore.point("show.story.frame")
 
 
   if (is.null(cur)) {
-    cur = list(values=values, stage=stage, changed.part=TRUE, changed.values=TRUE, changed.stage = TRUE)
+    cur = list(values=values, stage=stage, changed.frame=TRUE, changed.values=TRUE, changed.stage = TRUE)
   }
 
-  if (cur$changed.part | TRUE) {
-    if (is.null(part$ui))
-      part$ui = story.part.ui(part = part, es=es)
-    ui = part$ui
+  if (cur$changed.frame | TRUE) {
+    if (is.null(frame$ui))
+      frame$ui = story.frame.ui(frame = frame, es=es)
+    ui = frame$ui
     setUI("storyMainUI", ui)
   }
 
-  if (cur$changed.part | cur$changed.value | TRUE) {
-    html = compile.story.txt(c(part$tell,part$ask), values=cur$values,out = "html")
+  if (cur$changed.frame | cur$changed.value | TRUE) {
+    html = compile.story.txt(c(frame$tell,frame$ask), values=cur$values,out = "html")
     if (!is.null(cur$title)) {
       html = paste0("<h4>", cur$title, "</h4>", html)
     }
@@ -169,14 +169,14 @@ show.story.part = function(part=es$cur$part, values=NULL, stage="start",cur=es$c
   }
 
   if (stage == "complete") {
-    html = compile.story.txt(c(part$success),values=cur$values,out = "html")
+    html = compile.story.txt(c(frame$success),values=cur$values,out = "html")
     setUI(id = "answerUI",HTML(html))
   } else {
     setUI(id = "answerUI",HTML(""))
   }
 
-  if (cur$changed.part | cur$changed.stage | cur$changed.values | TRUE)
-    plot.part.panes(es=es)
+  if (cur$changed.frame | cur$changed.stage | cur$changed.values | TRUE)
+    plot.frame.panes(es=es)
 }
 
 

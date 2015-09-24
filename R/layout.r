@@ -9,8 +9,8 @@ default.layout = function() {
   )
 }
 
-make.part.layout = function(part,layout=list(), fill.layouts = list(part$layout,es$layout, default.layout()),  es) {
-  restore.point("make.part.layout")
+make.frame.layout = function(frame,layout=list(), fill.layouts = list(frame$layout,es$layout, default.layout()),  es) {
+  restore.point("make.frame.layout")
 
 
   set.missing = function(...) {
@@ -26,13 +26,13 @@ make.part.layout = function(part,layout=list(), fill.layouts = list(part$layout,
   layout$showpanes = as.character(layout$showpanes)
 
   layout$num.plots = length(layout$showpanes)
-  layout$num.images = length(part$images)
-  layout$num.portraits = length(part$portraits)
+  layout$num.images = length(frame$images)
+  layout$num.portraits = length(frame$portraits)
 
   layout$num.rhs = layout$num.plots + layout$num.images + layout$num.portraits
 
 
-#  if (isTRUE(!part$has.rhs))
+#  if (isTRUE(!frame$has.rhs))
 #    set.none.null(left_cols=10, left_margin=1, right_margin=1)
 
   set.missing(pane.cols = max(1,min(2, layout$num.rhs)))
@@ -41,8 +41,8 @@ make.part.layout = function(part,layout=list(), fill.layouts = list(part$layout,
   layout
 }
 
-story.part.ui = function(part=NULL,layout = part$layout, allow.edit=getES()$allow.edit, es) {
-  restore.point("story.part.ui")
+story.frame.ui = function(frame=NULL,layout = frame$layout, allow.edit=getES()$allow.edit, es) {
+  restore.point("story.frame.ui")
 
   right.cols = 12 - layout$left_cols - layout$left_margin - layout$right_margin
 
@@ -79,7 +79,7 @@ story.part.ui = function(part=NULL,layout = part$layout, allow.edit=getES()$allo
       get.buttons("top-left"),
       uiOutput("tellUI"),
       uiOutput("answerUI"),
-      story.portraits.ui(part=part, es=es),
+      story.portraits.ui(frame=frame, es=es),
       get.buttons("bottom-left")
     )
   } else {
@@ -90,7 +90,7 @@ story.part.ui = function(part=NULL,layout = part$layout, allow.edit=getES()$allo
     right.col =  column(
       width = right.cols,
       get.buttons("top-right"),
-      story.part.rhs.ui(part=part,es=es),
+      story.frame.rhs.ui(frame=frame,es=es),
       get.buttons("bottom-right")
     )
   } else {
@@ -109,10 +109,10 @@ story.part.ui = function(part=NULL,layout = part$layout, allow.edit=getES()$allo
   ui
 }
 
-story.portraits.ui = function(part,es) {
-  layout = part$layout
+story.portraits.ui = function(frame,es) {
+  layout = frame$layout
 
-  portraits.li = lapply.with.name(part$portraits, function(image, name) {
+  portraits.li = lapply.with.name(frame$portraits, function(image, name) {
     file.name = image
     str = paste0(
     '<figure>
@@ -127,10 +127,10 @@ story.portraits.ui = function(part,es) {
   portraits.li
 }
 
-story.part.rhs.ui = function(part, es) {
-  restore.point("story.part.rhs.ui")
+story.frame.rhs.ui = function(frame, es) {
+  restore.point("story.frame.rhs.ui")
 
-  layout = part$layout
+  layout = frame$layout
 
   panes = es$panes[layout$showpanes]
 
@@ -141,8 +141,8 @@ story.part.rhs.ui = function(part, es) {
     plotOutput(outputId = id,click = clickId, width=layout$plot_width,height=layout$plot_height)
   })
 
-  images.li = lapply.with.name(part$images, function(image, name) {
-    make.part.image.ui(part=part,image=image, name=name)
+  images.li = lapply.with.name(frame$images, function(image, name) {
+    make.frame.image.ui(frame=frame,image=image, name=name)
   })
   li = c(plot.li, images.li)
 
@@ -155,8 +155,8 @@ story.part.rhs.ui = function(part, es) {
 
 }
 
-make.part.image.ui = function(part, image,name, caption=NULL, layout=part$layout) {
-  restore.point("make.part.image.ui")
+make.frame.image.ui = function(frame, image,name, caption=NULL, layout=frame$layout) {
+  restore.point("make.frame.image.ui")
 
   file.name = get.story.image.file(image = image)
 
