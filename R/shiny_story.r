@@ -4,9 +4,9 @@ examples.shiny.story = function() {
   setwd("D:/libraries/EconStories/EconStories")
   initEconStories()
   ES = getES()
-  es = load.story("ThreeEq_G_langfristig")
-  es = load.story("SimpleLabor3EqStory")
   es = load.story("PhillipsCurveIntroStory")
+  es = load.story("SimpleLabor3EqStory")
+  es = load.story("ThreeEq_G_langfristig")
   init.story(es)
 
   app = shinyStoryApp(es)

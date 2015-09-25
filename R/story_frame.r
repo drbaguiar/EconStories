@@ -10,8 +10,11 @@ make.lag.object = function(obj, prefix = "lag_", ...) {
   sobj$name = paste0(prefix,obj$name)
 
   if (sobj$type == "curve") {
-    vars = find.variables(sobj$eq)
-    subst = paste0(prefix, vars)
+    vars = find.variables(obj$eq_)
+    vars = setdiff(vars, c(obj$xvar,obj$yvar))
+    subst = lapply(vars, function(var) {
+      as.name(paste0(prefix, var))
+    })
     names(subst) = vars
     fields = c("eq_","xformula_","yformula_","impl_")
 
