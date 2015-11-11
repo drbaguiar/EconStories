@@ -52,6 +52,8 @@ check.EconStories = function() {
 load.story = function(storyId, file=paste0(storyId,".yaml"), dir=getES()$stories.path, text=NULL, ES = getES()) {
   restore.point("load.story")
 
+  #obj = read.yaml(file = paste0(dir,"/",file))
+
   tt = load.struct(name="story",file = paste0(dir,"/",file),typeName = "story",text=text,types = ES$types)
 
   obj = tt.object(tt,1)
@@ -67,7 +69,7 @@ load.story = function(storyId, file=paste0(storyId,".yaml"), dir=getES()$stories
   #es = as.environment(read.yaml(file=paste0(dir,"/",file)))
 
   es$yaml = attr(tt,"yaml")
-  Encoding(es$yaml) <- "UTF-8"
+  #Encoding(es$yaml) <- "UTF-8"
 
   check.story(file = file, es=es)
 

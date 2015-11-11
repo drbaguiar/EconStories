@@ -153,7 +153,7 @@ set.story.prev.frame = function(es, frame.ind = es$cur$frame.ind, update.es=TRUE
   restore.point("set.story.prev.frame")
   frame.ind = max(frame.ind-1, 1)
   if (update.es) {
-    set.story.frame(frame.ind=frame.ind, es=es)
+    set.story.frame(frame.ind=frame.ind, solved=TRUE, es=es)
   }
   return(list(frame.ind=frame.ind, start=frame.ind==1))
 }
@@ -169,8 +169,13 @@ set.story.forward.frame = function(es, frame.ind = es$cur$frame.ind, update.es=T
 }
 
 
+story.tell.answer = function(es) {
+  set.story.frame(es=es, solved=TRUE)
+  show.story.frame(es=es)
+}
 
-set.story.frame = function(frame.ind,es, solved=FALSE, stage=NULL) {
+
+set.story.frame = function(frame.ind=es$cur$frame.ind,es, solved=FALSE, stage=NULL) {
   restore.point("set.story.frame")
 
   es$prev = prev = es$cur

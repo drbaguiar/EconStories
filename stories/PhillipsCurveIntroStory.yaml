@@ -11,44 +11,48 @@ settings:
 nachfrage_schock_quiz:
   layout:
     showpanes:
-    left_cols: 6
+    left_cols: 10
+    left_margin: 1
   tell: |
     Nehme Sie an, die meisten
     Firmen eines Landes
     verzeichnen auf einmal eine höhere Nachfrage nach ihren Gütern.
     Es kann viele Gründe für die höhere Nachfrage geben, z. B.
-      - Die Nachfrage im Ausland nach den Produkten der Firmen steigt
-      - Der Staat steigert die Nachfrage indem er viele neue Straßen baut.
-      - Haushalte und Firmen entscheiden sich mehr Immobilien zu bauen
-      - Die Konsumfreude der privaten Haushalte steigt
+      - Die Nachfrage im Ausland steigt und die Exporte steigen somit.
+      - Der Staat steigert die Nachfrage, indem er viele neue Straßen baut.
+      - Haushalte und Firmen entscheiden sich mehr Immobilien zu bauen.
+      - Die Konsumfreude der privaten Haushalte steigt.
       - ...
   quiz:
     question: |
-      Welche Auswirkungen wird so eine erhöhte Nachfrage vermutlich haben?
+      Welche Auswirkungen wird so ein positiver "Nachfrageschock" vermutlich haben?
     mc:
       - Die Arbeitslosigkeit steigt.
-      - Löhne steigen.+
-      - Preise steigen.
-  answer: |
+      - Löhne steigen stärker als sonst.*
+      - Preise steigen stärker als sonst.*
+  success: |
     1. Arbeitslosigkeit sinkt:
     Um die erhöhte Nachfrage zu decken, werden Firmen mehr produzieren.
     Ein Teil der Produktionserhöhung kann durch Überstunden umgesetzt
     werden, aber wir würden vermuten, dass zumindest manche Firmen auch
     mehr Arbeitnehmer einstellen.
 
-    2. Löhne steigen:
+    2. Löhne steigen stärker als sonst:
     Da viele Firmen mehr Arbeitnehmer suchen, werden Firmen tendenziell
-    höhere Löhne bieten um Beispielsweise Arbeitnehmer von anderen
+    höhere Löhne bieten, um beispielsweise Arbeitnehmer von anderen
     Firmen abzuwerben oder zu verhindern, dass die eignenen Arbeitnehmer
     abgeworben werden.
 
-    3. Preise steigen:
+    3. Preise steigen stärker als sonst:
     Die höheren Löhne erhöhen die Produktionskosten der Firmen. Auch
     sollte durch die erhöhte Nachfrage tendenziell die Marktmacht der
     Firmen steigen. Beides sollte zu einem Preisanstieg
     führen.
 
 historische_pc:
+  layout:
+    left_cols: 6
+    left_margin: 0
   tell: |
     Wenn man über solche Nachfrageschocks nachdenkt, könnte man
     einen negativen Zusammenhang zwischen Arbeitslosigkeit und

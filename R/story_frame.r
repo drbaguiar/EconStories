@@ -123,9 +123,16 @@ init.story.frame = function(frame, prev.frame=NULL, es=NULL) {
 
   frame$complete.symbols = frame$shown
 
-  try(Encoding(frame$tell) <- "UTF-8", silent=TRUE)
-  try(Encoding(frame$ask) <- "UTF-8", silent=TRUE)
-  try(Encoding(frame$success) <- "UTF-8", silent=TRUE)
+  if (!is.null(frame$quiz)) {
+    frame$quiz = shinyQuiz(id="storyQuiz",qu=frame$quiz,add.handler = FALSE)
+    frame$quiz_html = paste0(as.character(p(frame$quiz$ui)), collapse="\n")
+    frame$quiz_solved = paste0(as.character(p(quiz.ui(frame$quiz,solution = TRUE))), collapse="\n")
+    #try(Encoding(frame$quiz_html) <- "UTF-8", silent=TRUE)
+  }
+
+  #try(Encoding(frame$tell) <- "UTF-8", silent=TRUE)
+  #try(Encoding(frame$ask) <- "UTF-8", silent=TRUE)
+  #try(Encoding(frame$success) <- "UTF-8", silent=TRUE)
 
 
   if ("tell" %in% frame$append) {
@@ -137,7 +144,8 @@ init.story.frame = function(frame, prev.frame=NULL, es=NULL) {
   if (!is.null(frame$task))
       frame$task$type = get.story.frame.task.type(frame)
 
-  frame
+
+  frame$has.question = (!is.null(frame$task)) | (!is.null(frame$quiz))
 
   frame$layout = make.frame.layout(frame = frame,es=es)
 
@@ -148,7 +156,7 @@ init.story.frame = function(frame, prev.frame=NULL, es=NULL) {
   frame
 }
 
-show.story.frame = function(frame=es$cur$frame, values=NULL, stage="start",cur=es$cur, es=NULL) {
+show.story.frame = function(frame=es$cur$frame, values=NULL, stage=es$cur$stage,cur=es$cur, es=NULL) {
   restore.point("show.story.frame")
 
 
@@ -167,6 +175,13 @@ show.story.frame = function(frame=es$cur$frame, values=NULL, stage="start",cur=e
     html = compile.story.txt(c(frame$tell,frame$ask), values=cur$values,out = "html")
     if (!is.null(cur$title)) {
       html = paste0("<h4>", cur$title, "</h4>", html)
+    }
+    if (!is.null(frame$quiz)) {
+      if (stage=="complete") {
+        html = paste0(html, frame$quiz_solved)
+      } else {
+        html = paste0(html, frame$quiz_html)
+      }
     }
     setUI(id = "tellUI",HTML(html))
   }

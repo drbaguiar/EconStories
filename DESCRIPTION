@@ -12,4 +12,4 @@ License:
 Depends: dplyr,restorepoint,codeUtils, sktools, stringtools,
          YamlObjects, nleqslv,whisker, markdown, shinyEvents, shiny,
          dygraphs, shinyBS, shinyAce,  dplyrExtras, hwriter,
-         symbeqs,EconCurves, EconModels
+         symbeqs,EconCurves, EconModels, shinyQuiz

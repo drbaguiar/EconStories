@@ -4,13 +4,13 @@ examples.shiny.story = function() {
   setwd("D:/libraries/EconStories/EconStories")
   initEconStories()
   ES = getES()
-  es = load.story("PhillipsCurveIntroStory")
   es = load.story("SimpleLabor3EqStory")
+  es = load.story("PhillipsCurveIntroStory")
   es = load.story("ThreeEq_G_langfristig")
   init.story(es)
 
   app = shinyStoryApp(es)
-  frame = es$frames[[2]]
+  frame = es$frames[[1]]
   ui = story.frame.ui(frame = frame,es=es)
   addResourcePath("images",paste0(getES()$stories.path,"/images"))
   runEventsApp(app,launch.browser = rstudio::viewer)
@@ -45,10 +45,12 @@ shinyStoryApp = function(es,...) {
     ui
   )
 
+
   appInitHandler(initHandler = function(app,...) {
     restore.point("app.initHandler")
     addResourcePath("images",paste0(getES()$stories.path,"/images"))
     app$es = es
+    buttonHandler("storyQuiz__checkBtn",click.story.check.quiz, es=es)
   }, app=app)
 
   app$ui = ui

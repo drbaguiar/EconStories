@@ -90,7 +90,7 @@ stories.choose.ui = function(app=getApp(), ES=app$ES,...) {
 
   cp = lapply(ES$stories, function(es) {
     title = es$title
-    Encoding(title) = "UTF-8"
+    #Encoding(title) = "UTF-8"
     if (is.null(title)) title = es$storyId
     descr = compile.to.html(es$descr)
 
@@ -117,7 +117,7 @@ stories.choose.ui = function(app=getApp(), ES=app$ES,...) {
 
   foots = lapply(coll$footnotes, function(ft) {
     title = ft$title
-    Encoding(title) = "UTF-8"
+    #Encoding(title) = "UTF-8"
     if (is.null(title)) title = ""
     descr = compile.to.html(ft$descr)
     ui = bsCollapsePanel(title = title,
@@ -131,7 +131,7 @@ stories.choose.ui = function(app=getApp(), ES=app$ES,...) {
 
   title.html = coll$title
   if (!is.null(title.html)) {
-    Encoding(title.html) = "UTF-8"
+    #Encoding(title.html) = "UTF-8"
     title.html = h3(title.html)
   }
   descr.html = compile.to.html(coll$descr)
@@ -226,7 +226,7 @@ compile.to.html = function(txt) {
   if (is.null(txt)) return("")
 
   restore.point("compile.to.html")
-  Encoding(txt) = "UTF-8"
+  #Encoding(txt) = "UTF-8"
   html =  markdownToHTML(text=txt, fragment.only=TRUE, encoding="UTF-8")
   html
 }
